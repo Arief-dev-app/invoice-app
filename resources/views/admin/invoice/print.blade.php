@@ -16,6 +16,7 @@
                 <th>Total</th>
             </tr>
         </thead>
+        {{-- kode baru --}}
         {{-- <tbody>
             @foreach($invoice->items as $item)
                 <tr>
