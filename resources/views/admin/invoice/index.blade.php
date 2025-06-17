@@ -25,13 +25,22 @@
                 <tr>
                     <td class="border px-2 py-1">{{ $i + 1 }}</td>
                     <td class="border px-2 py-1 space-x-2">
-                        <a href="{{ route('invoice.print', $invoice->id) }}" target="_blank" class="text-blue-500">🖨️</a>
+                        @if ($invoice->trans_status == 3)
+                            <a href="{{ route('invoice.print', $invoice->id) }}" target="_blank" class="text-blue-500">🖨️</a>
+                        @else
+                            <span class="text-gray-400 cursor-not-allowed">🖨️</span>
+                        @endif
                         <button onclick='openInvoiceModal("view", {!! json_encode($invoice) !!})'>👁</button>
-                       <button onclick='openInvoiceModal("edit", {!! json_encode($invoice) !!})'>✏️</button>
-                       <form action="{{ route('product.destroy', $invoice->id) }}" method="POST" class="inline">
-                            @csrf @method('DELETE')
+                        <button onclick='openInvoiceModal("edit", {!! json_encode($invoice) !!})'>✏️</button>
+                        @if ($invoice->trans_status == 1)
+                        <form action="{{ route('product.destroy', $invoice->id) }}" method="POST" class="inline">
+                            @csrf
+                            @method('DELETE')
                             <button onclick="return confirm('Yakin hapus?')" class="text-red-500">🗑</button>
                         </form>
+                    @else
+                        <span class="text-gray-400 cursor-not-allowed">🗑</span>
+                    @endif
                     </td>
                     <td class="border px-2 py-1">{{ $invoice->trans_status == 1 ? 'Open' : ($invoice->trans_status == 2 ? 'Cancel' : ($invoice->trans_status == 3 ? 'Confirm' : 'Unknown')) }}</td>
                     <td class="border px-2 py-1">{{ $invoice->invoice_no }}</td>

@@ -49,6 +49,33 @@
                                 Invoice
                             </a>
                         </li>
+                        <li x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" class="w-full text-left py-2 {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                Auth
+                            </button>
+                            <ul x-show="open" class="ml-4 mt-1 space-y-1" x-cloak>
+                                <li>
+                                    <a href="{{ route('group-user.index') }}" class="{{ request()->routeIs('group-user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        User Group
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('menu.index') }}" class="{{ request()->routeIs('menu.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        Menu
+                                    </a>
+                                </li>
+                                 {{--<li>
+                                    <a href="{{ route('role-user.index') }}" class="{{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        Role User
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('user.index') }}" class="{{ request()->routeIs('user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        User
+                                    </a>
+                                </li> --}}
+                            </ul>
+                        </li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf

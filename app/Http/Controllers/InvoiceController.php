@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
 class InvoiceController extends Controller
@@ -22,7 +23,7 @@ class InvoiceController extends Controller
             (object) [
                 'id' => '1',
                 'invoice_no' => 'INV-001',
-                'trans_status' => '3',
+                'trans_status' => '2',
                 'user_id' => 1,
                 'customer_name' => 'Budi Santoso',
                 'total_harga' => 150000,
@@ -31,7 +32,7 @@ class InvoiceController extends Controller
             (object) [
                 'id' => '2',
                 'invoice_no' => 'INV-002',
-                'trans_status' => '3',
+                'trans_status' => '1',
                 'user_id' => 1,
                 'customer_name' => 'Siti Aminah',
                 'total_harga' => 220000,
@@ -128,7 +129,9 @@ class InvoiceController extends Controller
                 'created_at' => Carbon::parse('2025-06-10'),
             ]
         ])->first();
-        return view('admin.invoice.print', compact('invoice'));
+
+        $pdf = Pdf::loadView('admin.invoice.print', compact('invoice'));
+        return $pdf->stream('invoice-'.$invoice->invoice_no.'.pdf');
     }
 
     /**

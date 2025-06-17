@@ -25,6 +25,9 @@ Route::get('/', function () {
     Route::resource('invoice', \App\Http\Controllers\InvoiceController::class);
     Route::get('/invoice/{id}/print', [\App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
 
+    Route::resource('group-user', \App\Http\Controllers\GroupUserController::class);
+    Route::resource('menu', \App\Http\Controllers\MenuController::class);
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
