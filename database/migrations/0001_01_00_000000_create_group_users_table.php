@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('group_users', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
+            $table->string('description')->nullable();
+            $table->boolean('flag_active')->default(true);
             $table->timestamps();
         });
     }

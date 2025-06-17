@@ -12,13 +12,7 @@ class GroupUserController extends Controller
      */
     public function index()
     {
-        // $groupUsers = GroupUser::all();
-        $groupUsers = collect([
-            (object)[ 'id' => 1, 'name' => 'Admin' ],
-            (object)[ 'id' => 2, 'name' => 'Marketing' ],
-            (object)[ 'id' => 3, 'name' => 'Keuangan' ],
-            (object)[ 'id' => 4, 'name' => 'Produksi' ],
-        ]);
+        $groupUsers = GroupUser::all();
         return view('admin.group_user.index', compact('groupUsers'));
     }
 
@@ -35,7 +29,28 @@ class GroupUserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+       
+        try {
+            $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'description' => ['required', 'string', 'max:255'],
+            
+            ]);
+
+            $user = GroupUser::create([
+                'name' => $request->name,
+                'description' => $request->description,
+            ]);
+    
+            return redirect()->route('group-user.index')->with('success', 'Menu berhasil dibuat!');
+
+        } catch (\Throwable $th) {
+            return back()->withInput()->withErrors([
+                'error' => 'Gagal menyimpan data. Silakan coba lagi.',
+            ]);
+        }
+
+        
     }
 
     /**
@@ -59,7 +74,19 @@ class GroupUserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:255'],
+        ]);
+    
+        $groupUser = GroupUser::findOrFail($id);
+        $groupUser->update([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('group-user.index')->with('success', 'Group user berhasil diperbarui!');
     }
 
     /**
@@ -67,6 +94,21 @@ class GroupUserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $groupUser = GroupUser::findOrFail($id);
+
+        // Ubah flag_active menjadi false (nonaktif)
+        $groupUser->flag_active = false;
+        $groupUser->save();
+
+        return redirect()->route('group-user.index')->with('success', 'Group user berhasil dinonaktifkan.');
+    }
+
+    public function restore($id)
+    {
+        $groupUser = GroupUser::findOrFail($id);
+        $groupUser->flag_active = true;
+        $groupUser->save();
+
+        return redirect()->route('group-user.index')->with('success', 'Group user berhasil diaktifkan kembali.');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Menu;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
@@ -11,36 +12,7 @@ class MenuController extends Controller
      */
     public function index()
     {
-        $menus = [
-            (object)[
-                'id' => 1,
-                'nama' => 'Dashboard',
-                'url' => '/dashboard',
-                'icon' => '🏠',
-                'urutan' => 1,
-            ],
-            (object)[
-                'id' => 2,
-                'nama' => 'User',
-                'url' => '/user',
-                'icon' => '👤',
-                'urutan' => 2,
-            ],
-            (object)[
-                'id' => 3,
-                'nama' => 'Product',
-                'url' => '/product',
-                'icon' => '📦',
-                'urutan' => 3,
-            ],
-            (object)[
-                'id' => 4,
-                'nama' => 'Invoice',
-                'url' => '/invoice',
-                'icon' => '🧾',
-                'urutan' => 4,
-            ],
-        ];
+        $menus = Menu::all();
 
         return view('admin.menu.index', compact('menus'));
     }
@@ -58,7 +30,29 @@ class MenuController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'slug' => ['required', 'string', 'max:255'],
+            
+            ]);
+
+
+            $user = Menu::create([
+                'name' => $request->name,
+                'slug' => $request->slug,
+                'flag_active' => true, // Jika kolom ini ada
+            ]);
+    
+            return redirect()->route('menu.index')->with('success', 'Group user berhasil dibuat!');
+
+        } catch (\Exception $e) {
+            // Log error kalau perlu: Log::error($e);
+            return back()->withInput()->withErrors([
+                'error' => 'Gagal menyimpan data. Silakan coba lagi.',
+            ]);
+        }
+
     }
 
     /**

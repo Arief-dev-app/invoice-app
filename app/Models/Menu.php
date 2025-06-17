@@ -9,6 +9,8 @@ class Menu extends Model
 {
     use HasFactory;
 
+    protected $table = 'menu';
+
     protected $fillable = ['name', 'slug', 'url'];
 
     public function permissions()

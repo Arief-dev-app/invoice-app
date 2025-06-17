@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('inevoice_detail', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('invoice_id')->constrained('inevoice')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->integer('qty');
             $table->decimal('harga_satuan', 15, 2);
             $table->decimal('subtotal', 15, 2);

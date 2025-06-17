@@ -15,7 +15,7 @@ Route::get('/', function () {
 
 
 
-// Route::middleware('auth')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
@@ -26,11 +26,13 @@ Route::get('/', function () {
     Route::get('/invoice/{id}/print', [\App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
 
     Route::resource('group-user', \App\Http\Controllers\GroupUserController::class);
+    Route::post('group-user/{id}/restore', [\App\Http\Controllers\GroupUserController::class, 'restore'])->name('group-user.restore');
+
     Route::resource('menu', \App\Http\Controllers\MenuController::class);
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-// });
+});
 
 require __DIR__.'/auth.php';
