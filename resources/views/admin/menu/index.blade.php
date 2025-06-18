@@ -66,46 +66,32 @@
 </div>
 
 <div id="menuModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold" id="modalTitle">Tambah Menu</h3>
-            <button onclick="closeMenuModal()" class="text-gray-500 hover:text-black">&times;</button>
-        </div>
+    <div class="bg-white rounded shadow-lg w-full max-w-[1400px] h-[90vh] flex flex-col">
+       <!-- Header -->
+    <div class="flex justify-between items-center px-6 py-4 border-b">
+        <h3 class="text-lg font-bold" id="modalTitle">Tambah Menu</h3>
+        <button onclick="closeMenuModal()" class="text-gray-500 hover:text-black text-2xl">&times;</button>
+    </div>
 
-        <form id="menuForm" method="POST"  onsubmit="handleFormSubmit(event)">
-            @csrf
-            <input type="hidden" name="_method" id="method" value="POST">
-            <input type="hidden" name="id" id="menu_id" value="{{ old('id') }}">
+    <form id="menuForm" method="POST" onsubmit="handleFormSubmit(event)" class="flex flex-col flex-grow overflow-hidden">
+        @csrf
+        <input type="hidden" name="_method" id="method" value="POST">
+        <input type="hidden" name="id" id="menu_id" value="{{ old('id') }}">
 
-            <div class="mb-2">
-                <label class="block text-sm font-medium">Nama Menu</label>
-                <input type="text" name="name" id="name" value="{{ old('name') }}" class="w-full border rounded px-3 py-2 @error('name') border-red-500 @enderror">
-                @error('name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-2">
-                <label class="block text-sm font-medium">URL</label>
-                <input type="text" name="slug" id="slug" value="{{ old('slug') }}" class="w-full border rounded px-3 py-2 @error('slug') border-red-500 @enderror">
-                @error('slug')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-             <!-- Tabel Produk -->
+        <!-- Scrollable Content -->
+        <div class="flex-grow overflow-y-auto px-6 py-4">
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium">Produk</label>
-                    <button type="button" onclick="addProductRow()" class="bg-green-500 text-white text-sm px-2 py-1 rounded">+ Tambah Produk</button>
+                    <label class="block text-sm font-medium">Menu</label>
+                    <button type="button" onclick="addProductRow()" class="bg-green-500 text-white text-sm px-2 py-1 rounded">+ Tambah Menu</button>
                 </div>
                 <table class="w-full border text-sm" id="productTable">
                     <thead>
                         <tr class="bg-gray-100">
                             <th class="border px-2 py-1">Aksi</th>
-                            <th class="border px-2 py-1">Qty Satuan</th>
-                            <th class="border px-2 py-1">Produk</th>
-                            <th class="border px-2 py-1">Qty</th>
-                            <th class="border px-2 py-1">Total Harga</th>
+                            <th class="border px-2 py-1">Nama Menu</th>
+                            <th class="border px-2 py-1">Kode</th>
+                            <th class="border px-2 py-1">Slug</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -113,12 +99,15 @@
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            <div class="flex justify-end space-x-2 mt-4 border-t pt-4" id="modalFooter">
-                <button type="button" onclick="closeMenuModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Batal</button>
-                <button type="submit" form="menuForm" id="submitBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
-            </div>
-        </form>
+        <!-- Sticky Footer -->
+        <div class="flex justify-end space-x-2 px-6 py-4 border-t bg-white" id="modalFooter">
+            <button type="button" onclick="closeMenuModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Batal</button>
+            <button type="submit" id="submitBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
+        </div>
+    </form>
+
     </div>
 </div>
 @endsection
@@ -141,6 +130,8 @@
             title.innerText = 'Tambah Menu';
             form.action = '/menu';
             method.value = 'POST';
+
+            addProductRow();
         }
 
         if (mode === 'view') {
@@ -234,6 +225,79 @@
         } else {
             e.preventDefault();
         }
+    }
+
+    function generateRandomCode(length = 6) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < length; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    let rowCount = 0;
+
+    function addProductRow(button = null) {
+        const tbody = document.querySelector('#productTable tbody');
+        const row = document.createElement('tr');
+
+        let kode = '';
+        let namePlaceholder = 'Nama Menu';
+
+        // Jika tidak ada tombol (berarti baris awal)
+        if (!button) {
+            kode = generateRandomCode();
+        } else {
+            // Baris sub-menu (klik dari tombol ➕)
+            const parentRow = button.closest('tr');
+            const parentCodeInput = parentRow.querySelector('input[name$="[code]"]');
+            const parentCode = parentCodeInput.value;
+
+            // Hitung jumlah sub dari parent yang ada
+            const subRows = Array.from(tbody.querySelectorAll('input[name$="[code]"]'))
+                .filter(input => input.value.startsWith(parentCode + '-'));
+
+            const subIndex = subRows.length + 1;
+            kode = `${parentCode}-${subIndex}`;
+            namePlaceholder = 'Nama Sub Menu';
+        }
+
+        row.innerHTML = `
+            <td class="border px-2 py-1 text-center space-x-1">
+                <button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>
+                <button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][name]" class="w-full border rounded px-2 py-1" placeholder="${namePlaceholder}">
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][code]" class="w-full border rounded px-2 py-1" value="${kode}" readonly>
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][slug]" class="w-full border rounded px-2 py-1" placeholder="Slug">
+            </td>
+        `;
+
+        // Tambahkan di akhir
+        tbody.appendChild(row);
+        rowCount++;
+    }
+
+
+    function updateTotal(el) {
+        const row = el.closest('tr');
+        const select = row.querySelector('select');
+        const hargaInput = row.querySelector('input[name$="[harga]"]');
+        const qtyInput = row.querySelector('input[name$="[qty]"]');
+        const totalInput = row.querySelector('input[name$="[total]"]');
+
+        const harga = parseInt(select.selectedOptions[0]?.dataset?.harga || 0);
+        const qty = parseInt(qtyInput.value || 0);
+        const total = harga * qty;
+
+        hargaInput.value = harga;
+        totalInput.value = total;
     }
 
 </script>
