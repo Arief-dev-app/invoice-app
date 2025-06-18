@@ -28,6 +28,15 @@
             </script>
         @endif
 
+        @if (session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4" role="alert">
+                <strong class="font-bold">Gagal:</strong> {{ session('error') }}
+                @if (session('error_detail'))
+                    <br><span class="text-xs text-gray-600">Detail: {{ session('error_detail') }}</span>
+                @endif
+            </div>
+        @endif
+
         <table class="min-w-full border text-sm">
             <thead class="bg-gray-100">
                 <tr>
@@ -42,13 +51,12 @@
                 <tr>
                     <td class="border px-2 py-1 text-center">{{ $i + 1 }}</td>
                     <td class="border px-2 py-1 space-x-2">
-                        <button onclick='handleModalAction("view", {!! json_encode($menu) !!})'>👁</button>
-                        <button onclick='handleModalAction("edit", {!! json_encode($menu) !!})'>✏️</button>
-                        <form action="{{ route('menu.destroy', $menu->id) }}" method="POST" class="inline" onsubmit="handleDeleteAction(event, this)">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-500">🗑</button>
-                        </form>
+                        <!-- <button onclick='handleModalAction("view", {!! json_encode($menu) !!})'>👁</button> -->
+                        <!-- <button onclick='handleModalAction("edit", {!! json_encode($menu) !!})'>✏️</button> -->
+                        <button onclick="fetchMenuAndOpenModal({{ $menu->id }}, 'view')">👁</button>
+                        <button onclick="fetchMenuAndOpenModal({{ $menu->id }}, 'edit')">✏️</button>
+                        <button onclick="handleDeleteAction(() => deleteMenu({{ $menu->id }}))">🗑</button>
+                        
                     </td>
                     <td class="border px-2 py-1">{{ $menu->name }}</td>
                     <td class="border px-2 py-1">{{ $menu->slug }}</td>
@@ -60,6 +68,18 @@
 </div>
 
 <!-- Modal -->
+
+<div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[9999]">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <h2 class="text-lg font-semibold mb-4">Konfirmasi Hapus</h2>
+        <p class="text-sm text-gray-600 mb-6">Apakah Anda yakin ingin menghapus item ini?</p>
+        <div class="flex justify-end space-x-2">
+            <button onclick="cancelDelete()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Batal</button>
+            <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded">Hapus</button>
+        </div>
+    </div>
+</div>
+
 <div id="fullscreenLoader" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[9999] flex flex-col items-center justify-center">
     <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
     <div class="text-white mt-4 text-lg">Memuat data...</div>
@@ -83,13 +103,14 @@
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-2">
                     <label class="block text-sm font-medium">Menu</label>
-                    <button type="button" onclick="addProductRow()" class="bg-green-500 text-white text-sm px-2 py-1 rounded">+ Tambah Menu</button>
+                    <!-- <button type="button" onclick="addProductRow()" class="bg-green-500 text-white text-sm px-2 py-1 rounded">+ Tambah Menu</button> -->
                 </div>
                 <table class="w-full border text-sm" id="productTable">
                     <thead>
                         <tr class="bg-gray-100">
                             <th class="border px-2 py-1">Aksi</th>
                             <th class="border px-2 py-1">Nama Menu</th>
+                            <th class="border px-2 py-1" style="width: 5%;">
                             <th class="border px-2 py-1">Kode</th>
                             <th class="border px-2 py-1">Slug</th>
                         </tr>
@@ -110,6 +131,7 @@
 
     </div>
 </div>
+<div id="alertContainer" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md"></div>
 @endsection
 
 @push('scripts')
@@ -121,6 +143,7 @@
         const method = document.getElementById('method');
         const footer = document.getElementById('modalFooter');
 
+
         form.reset();
         document.getElementById('menu_id').value = '';
         form.querySelectorAll('input[type="text"]').forEach(i => i.removeAttribute('readonly'));
@@ -130,6 +153,9 @@
             title.innerText = 'Tambah Menu';
             form.action = '/menu';
             method.value = 'POST';
+
+            document.querySelector('#productTable tbody').innerHTML = '';
+            rowCount = 0;
 
             addProductRow();
         }
@@ -148,6 +174,7 @@
             form.action = `/menu/${data.id}`;
             method.value = 'PUT';
             fillForm(data);
+            
         }
 
         modal.classList.remove('hidden');
@@ -161,10 +188,56 @@
     }
 
     function fillForm(data) {
-        if (!data) return;
-        document.getElementById('menu_id').value = data.id || '';
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('slug').value = data.slug || '';
+        const tbody = document.querySelector('#productTable tbody');
+        tbody.innerHTML = '';
+        rowCount = 0;
+
+        const parent = {
+            name: data.name,
+            seq: data.seq ?? 1,
+            code: data.code,
+            slug: data.slug,
+        };
+
+        appendMenuRow(parent);
+
+        if (Array.isArray(data.children)) {
+            data.children.forEach(child => {
+                appendMenuRow(child, parent.code, parent.seq);
+            });
+        }
+    }
+
+    function appendMenuRow(item, parentCode = null, parentSeq = 1) {
+        const tbody = document.querySelector('#productTable tbody');
+        const row = document.createElement('tr');
+
+        let isSubmenu = parentCode !== null;
+
+        let code = item.code || generateRandomCode();
+        let seq = item.seq || rowCount + 1;
+
+        row.innerHTML = `
+            <td class="border px-2 py-1 text-center space-x-1">
+                ${!isSubmenu ? `<button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>` : ''}
+                ${isSubmenu ? `<button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>` : ''}
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][name]" class="w-full border rounded px-2 py-1" value="${item.name || ''}">
+            </td>
+            <td class="border px-2 py-1">
+                <input type="number" name="items[${rowCount}][seq]" class="w-full border rounded px-2 py-1" value="${seq}" readonly>
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][code]" class="w-full border rounded px-2 py-1" value="${code}" readonly>
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="items[${rowCount}][slug]" class="w-full border rounded px-2 py-1" value="${item.slug || ''}">
+            </td>
+        `;
+
+        tbody.appendChild(row);
+        rowCount++;
     }
 
     function showFullscreenLoader() {
@@ -179,10 +252,20 @@
 
     function handleAddGroupClick() {
         showFullscreenLoader();
-        setTimeout(() => {
+        fetch('/menu/create')
+        .then(res => {
+            if (!res.ok) throw new Error('Gagal memuat data');
+            return res.json();
+        })
+        .then(data => {
             hideFullscreenLoader();
-            openMenuModal('create');
-        }, 2000);
+            openMenuModal('create', data.menus); // ← tampilkan modal isi default (jika ada)
+        })
+        .catch(err => {
+            console.error(err);
+            hideFullscreenLoader();
+            alert('Gagal membuka form tambah menu.');
+        });
     }
 
     function handleModalAction(mode, data = null) {
@@ -193,37 +276,172 @@
         }, 1000);
     }
 
-    function handleFormSubmit(event) {
-        event.preventDefault();
+    function showSuccessAlert(message) {
+        const container = document.getElementById('alertContainer');
 
-        showFullscreenLoader();
-        
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true; // Disable agar tidak bisa diklik berkali-kali
+        const alert = document.createElement('div');
+        alert.className = 'bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center space-x-2 transition-opacity duration-500';
+        alert.innerHTML = `
+            <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span class="flex-1">${message}</span>
+        `;
 
-        showFullscreenLoader(); // Tampilkan loading seperti yang digunakan di seluruh app
+        container.appendChild(alert);
 
-        // Tunggu sedikit agar loader sempat terlihat
         setTimeout(() => {
-            event.target.submit(); 
-        }, 1500); 
+            alert.classList.add('opacity-0');
+            setTimeout(() => alert.remove(), 500);
+        }, 2000);
     }
 
-    function handleDeleteAction(e, form) {
-        if (confirm('Yakin nonaktifkan group ini?')) {
-            showFullscreenLoader();
-            form.submit();
-        } else {
-            e.preventDefault();
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const url = form.action;
+        const method = document.getElementById('method').value || 'POST';
+
+        showFullscreenLoader();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+
+        const formData = new FormData(form);
+
+        try {
+
+            const response = await fetch(url, {
+                method: method === 'POST' ? 'POST' : 'POST', // tetap pakai POST, Laravel baca _method
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                closeMenuModal();
+                showSuccessAlert('Menu berhasil disimpan!');
+            } else if (response.status === 422) {
+                // Gagal validasi
+                showValidationErrors(result.errors);
+                hideFullscreenLoader();
+                submitBtn.disabled = false;
+            } else {
+                alert('Terjadi kesalahan server.');
+                hideFullscreenLoader();
+                submitBtn.disabled = false;
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Gagal mengirim data.');
+            hideFullscreenLoader();
+            submitBtn.disabled = false;
+        } finally {
+            hideFullscreenLoader(); // ✅ PASTIKAN spinner selalu dimatikan
+            submitBtn.disabled = false;
+        }
+
+        
+    }
+
+    async function fetchMenuAndOpenModal(menuId, mode = 'edit') {
+        showFullscreenLoader();
+
+        try {
+            const response = await fetch(`/menu/${menuId}/edit`);
+            console.log(response);
+            if (!response.ok) throw new Error('Gagal memuat data');
+
+            const data = await response.json();
+
+            const menuData = data.menus;
+
+            hideFullscreenLoader();
+            openMenuModal(mode, menuData);
+
+        } catch (error) {
+            console.error(error);
+            hideFullscreenLoader();
+            alert('Terjadi kesalahan saat memuat data menu.');
         }
     }
 
-    function handleRestoreAction(e, form) {
-        if (confirm('Aktifkan kembali group ini?')) {
-            showFullscreenLoader();
-            form.submit();
-        } else {
-            e.preventDefault();
+    function showValidationErrors(errors) {
+        const fields = document.querySelectorAll('#menuForm input');
+
+        fields.forEach(input => {
+            const name = input.getAttribute('name');
+            const errorMessage = errors[name];
+            input.classList.remove('border-red-500');
+
+            // Tambahkan pesan error
+            let errorEl = input.parentNode.querySelector('.error-text');
+            if (errorEl) errorEl.remove();
+
+            if (errorMessage) {
+                input.classList.add('border-red-500');
+                const small = document.createElement('small');
+                small.classList.add('error-text', 'text-red-600', 'block', 'mt-1');
+                small.textContent = errorMessage[0];
+                input.parentNode.appendChild(small);
+            }
+        });
+    }
+
+    let deleteCallback = null;
+
+    function handleDeleteAction(callback) {
+        deleteCallback = callback;
+        const modal = document.getElementById('confirmDeleteModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+
+    function cancelDelete() {
+        deleteCallback = null;
+        const modal = document.getElementById('confirmDeleteModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function confirmDelete() {
+        if (typeof deleteCallback === 'function') {
+            deleteCallback();
+        }
+        cancelDelete(); // Close modal
+    }
+
+    async function deleteMenu(menuId) {
+        showFullscreenLoader();
+
+        try {
+            const response = await fetch(`/menu/${menuId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: JSON.stringify({ _method: 'DELETE' })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showSuccessAlert(result.message || 'Menu berhasil dihapus');
+                setTimeout(() => window.location.reload(), 1000); // Atau refresh tabel pakai AJAX
+            } else {
+                alert(result.message || 'Gagal menghapus menu.');
+            }
+        } catch (err) {
+            console.error('Gagal hapus:', err);
+            alert('Terjadi kesalahan saat menghapus.');
+        } finally {
+            hideFullscreenLoader();
         }
     }
 
@@ -243,11 +461,15 @@
         const row = document.createElement('tr');
 
         let kode = '';
+        let seq = '';
         let namePlaceholder = 'Nama Menu';
+        let showAddButton = true;
 
         // Jika tidak ada tombol (berarti baris awal)
         if (!button) {
             kode = generateRandomCode();
+            seq = 1;
+            showAddButton = true;
         } else {
             // Baris sub-menu (klik dari tombol ➕)
             const parentRow = button.closest('tr');
@@ -260,16 +482,21 @@
 
             const subIndex = subRows.length + 1;
             kode = `${parentCode}-${subIndex}`;
+            seq = parseInt(parentRow.querySelector('input[name$="[seq]"]').value + '' + subIndex);
             namePlaceholder = 'Nama Sub Menu';
+            showAddButton = false;
         }
 
         row.innerHTML = `
             <td class="border px-2 py-1 text-center space-x-1">
-                <button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>
-                <button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>
+                ${showAddButton ? `<button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>` : ''}
+                ${!showAddButton ? `<button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>` : ''}
             </td>
             <td class="border px-2 py-1">
                 <input type="text" name="items[${rowCount}][name]" class="w-full border rounded px-2 py-1" placeholder="${namePlaceholder}">
+            </td>
+            <td class="border px-2 py-1">
+                <input type="number" name="items[${rowCount}][seq]" class="w-full border rounded px-2 py-1" value="${seq}" readonly>
             </td>
             <td class="border px-2 py-1">
                 <input type="text" name="items[${rowCount}][code]" class="w-full border rounded px-2 py-1" value="${kode}" readonly>
@@ -285,31 +512,27 @@
     }
 
 
-    function updateTotal(el) {
-        const row = el.closest('tr');
-        const select = row.querySelector('select');
-        const hargaInput = row.querySelector('input[name$="[harga]"]');
-        const qtyInput = row.querySelector('input[name$="[qty]"]');
-        const totalInput = row.querySelector('input[name$="[total]"]');
-
-        const harga = parseInt(select.selectedOptions[0]?.dataset?.harga || 0);
-        const qty = parseInt(qtyInput.value || 0);
-        const total = harga * qty;
-
-        hargaInput.value = harga;
-        totalInput.value = total;
-    }
-
 </script>
 
 @if ($errors->any())
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-        openMenuModal("{{ old('_method') === 'PUT' ? 'edit' : 'create' }}", {
+        const oldItems = @json(old('items', []));
+        let data = {
             id: '{{ old("id") }}',
-            name: '{{ old("name") }}',
-            slug: '{{ old("slug") }}'
-        });
+            name: oldItems[0]?.name || '',
+            code: oldItems[0]?.code || '',
+            slug: oldItems[0]?.slug || '',
+            seq: oldItems[0]?.seq || 1,
+            children: []
+        };
+
+        // Asumsikan item pertama adalah parent
+        for (let i = 1; i < oldItems.length; i++) {
+            data.children.push(oldItems[i]);
+        }
+
+        openMenuModal("{{ old('_method') === 'PUT' ? 'edit' : 'create' }}", data);
     });
 </script>
 @endif

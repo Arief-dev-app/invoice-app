@@ -76,6 +76,31 @@
                                 </li> --}}
                             </ul>
                         </li>
+                        {{-- Dinamis Menu dari DB --}}
+                        @foreach ($menus as $menu)
+                            @if ($menu->children->isNotEmpty())
+                                <li x-data="{ open: false }" class="relative">
+                                    <button @click="open = !open" class="w-full text-left py-2 {{ request()->is(strtolower($menu->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        {{ $menu->name }}
+                                    </button>
+                                    <ul x-show="open" class="ml-4 mt-1 space-y-1" x-cloak>
+                                        @foreach ($menu->children as $child)
+                                            <li>
+                                                <a href="{{ url($child->slug) }}" class="{{ request()->is(strtolower($child->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                                    {{ $child->name }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </li>
+                            @else
+                                <li>
+                                    <a href="{{ url($menu->slug) }}" class="{{ request()->is(strtolower($menu->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                        {{ $menu->name }}
+                                    </a>
+                                </li>
+                            @endif
+                        @endforeach
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf

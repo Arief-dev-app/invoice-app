@@ -13,8 +13,11 @@ return new class extends Migration
     {
         Schema::create('menu', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // contoh: "Invoice", "Pengeluaran", "User"
-            $table->string('slug')->unique(); // contoh: "invoice"
+            $table->string('name'); 
+            $table->integer('seq'); 
+            $table->string('code'); 
+            $table->string('slug')->nullable();
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->timestamps();
         });
     }

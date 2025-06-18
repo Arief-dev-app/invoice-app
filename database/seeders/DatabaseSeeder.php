@@ -26,12 +26,46 @@ class DatabaseSeeder extends Seeder
 
         $menus = [
             [
-                'name' => 'Dashboard',
-                'slug' => '/',
+                'name' => 'Master',
+                'seq' => '1',
+                'code' => 'MENU01',
+                'slug' => '',
+                'parent_id' => null,
             ],
             [
-                'name' => 'Company',
-                'slug' => '/company',
+                'name' => 'Produk',
+                'seq' => '11',
+                'code' => 'MENU01-1',
+                'slug' => '/produk',
+                'parent_id' => 1,
+            ],
+            [
+                'name' => 'Customer',
+                'seq' => '12',
+                'code' => 'MENU01-2',
+                'slug' => '/customer',
+                'parent_id' => 1,
+            ],
+            [
+                'name' => 'Supplier',
+                'seq' => '13',
+                'code' => 'MENU01-3',
+                'slug' => '/supplier',
+                'parent_id' => 1,
+            ],
+            [
+                'name' => 'Jasa',
+                'seq' => '14',
+                'code' => 'MENU01-4',
+                'slug' => '/jasa',
+                'parent_id' => 1,
+            ],
+            [
+                'name' => 'Kategori',
+                'seq' => '15',
+                'code' => 'MENU01-5',
+                'slug' => '/kategori',
+                'parent_id' => 1,
             ],
         ];
     
@@ -46,8 +80,8 @@ class DatabaseSeeder extends Seeder
                 'flag_active' => true,
             ],
             [
-                'name' => 'IT',
-                'description' => 'IT',
+                'name' => 'Kasir',
+                'description' => 'Kasir',
                 'flag_active' => true,
             ],
         ];

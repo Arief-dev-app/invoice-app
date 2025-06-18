@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GroupUser;
+use App\Models\Menu;
 use Illuminate\Http\Request;
 
 class GroupUserController extends Controller
@@ -13,7 +14,8 @@ class GroupUserController extends Controller
     public function index()
     {
         $groupUsers = GroupUser::all();
-        return view('admin.group_user.index', compact('groupUsers'));
+        $menus = Menu::with('children')->whereNull('parent_id')->get();
+        return view('admin.group_user.index', compact('groupUsers','menus'));
     }
 
     /**
