@@ -14,7 +14,9 @@ return new class extends Migration
        Schema::create('products', function (Blueprint $table) {
         $table->id();
         $table->string('nama');
-        $table->decimal('harga', 15, 2);
+        $table->decimal('harga_jual', 15, 2);
+        $table->decimal('harga_beli', 15, 2);
+        $table->decimal('stock', 15, 2);
         $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
         $table->timestamps();
     });

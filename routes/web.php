@@ -29,6 +29,13 @@ Route::middleware('auth')->group(function () {
     Route::post('group-user/{id}/restore', [\App\Http\Controllers\GroupUserController::class, 'restore'])->name('group-user.restore');
 
     Route::resource('menu', \App\Http\Controllers\MenuController::class);
+    
+    Route::resource('role-user', \App\Http\Controllers\RoleUserController::class);
+    Route::get('/role-user/{id}/menus', [\App\Http\Controllers\RoleUserController::class, 'getMenusByGroup']);
+    
+    Route::resource('user', \App\Http\Controllers\UserController::class);
+
+    
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

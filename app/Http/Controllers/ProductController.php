@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Menu;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -30,8 +31,10 @@ class ProductController extends Controller
              (object) ['id' => 10, 'nama' => 'Produk J', 'harga' => 55000],
         ]);
 
+        $menus = Menu::with('children')->whereNull('parent_id')->get();
 
-        return view('admin.product.index', compact('products', 'search'));
+
+        return view('admin.product.index', compact('products','menus', 'search'));
     }
 
     /**

@@ -4,9 +4,9 @@
 <div class="px-4 py-6">
     <div class="bg-white shadow rounded p-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">Daftar Menu</h2>
+            <h2 class="text-xl font-bold">Daftar Role</h2>
             <button id="addGroupBtn" onclick="handleAddGroupClick()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                + Tambah Menu</button>
+                + Tambah Role</button>
             </div>
 
         @if (session('success'))
@@ -42,24 +42,22 @@
                 <tr>
                     <th class="border px-2 py-1 w-12 text-center">No</th>
                     <th class="border px-2 py-1">Aksi</th>
-                    <th class="border px-2 py-1">Nama Menu</th>
-                    <th class="border px-2 py-1">URL</th>
+                    <th class="border px-2 py-1">Nama Group User</th>
+                    
                 </tr>
             </thead>
             <tbody>
-                @foreach ($menus as $i => $menu)
+                @foreach ($roles as $i => $role)
                 <tr>
                     <td class="border px-2 py-1 text-center">{{ $i + 1 }}</td>
                     <td class="border px-2 py-1 space-x-2">
-                        <!-- <button onclick='handleModalAction("view", {!! json_encode($menu) !!})'>👁</button> -->
-                        <!-- <button onclick='handleModalAction("edit", {!! json_encode($menu) !!})'>✏️</button> -->
-                        <button onclick="fetchMenuAndOpenModal({{ $menu->id }}, 'view')">👁</button>
-                        <button onclick="fetchMenuAndOpenModal({{ $menu->id }}, 'edit')">✏️</button>
-                        <button onclick="handleDeleteAction(() => deleteMenu({{ $menu->id }}))">🗑</button>
+                        <button onclick="fetchMenuAndOpenModal({{ $role->id }}, 'view')">👁</button>
+                        <button onclick="fetchMenuAndOpenModal({{ $role->id }}, 'edit')">✏️</button>
+                        <button onclick="handleDeleteAction(() => deleteMenu({{ $role->id }}))">🗑</button>
                         
                     </td>
-                    <td class="border px-2 py-1">{{ $menu->name }}</td>
-                    <td class="border px-2 py-1">{{ $menu->slug }}</td>
+                    <td class="border px-2 py-1">{{ $role->groupUser->name }}</td>
+                    
                 </tr>
                 @endforeach
             </tbody>
@@ -86,10 +84,10 @@
 </div>
 
 <div id="menuModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-5xl h-[90vh] flex flex-col">
+<div class="bg-white p-6 rounded shadow-lg w-full max-w-5xl h-[90vh] flex flex-col">
        <!-- Header -->
     <div class="flex justify-between items-center px-6 py-4 border-b">
-        <h3 class="text-lg font-bold" id="modalTitle">Tambah Menu</h3>
+        <h3 class="text-lg font-bold" id="modalTitle">Tambah Role</h3>
         <button onclick="closeMenuModal()" class="text-gray-500 hover:text-black text-2xl">&times;</button>
     </div>
 
@@ -101,18 +99,41 @@
         <!-- Scrollable Content -->
         <div class="flex-grow overflow-y-auto px-6 py-4">
             <div class="mb-4">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium">Menu</label>
-                    <!-- <button type="button" onclick="addProductRow()" class="bg-green-500 text-white text-sm px-2 py-1 rounded">+ Tambah Menu</button> -->
+               
+                 
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="user_group_select" class="block text-sm font-medium">Pilih Group User</label>
+                    </div>
+                    <select id="user_group_select" name="user_group_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="">-- Pilih Group --</option>
+                        @foreach($group as $user_group)
+                            <option value="{{ $user_group->id }}" {{ old('user_group_id') == $user_group->id ? 'selected' : '' }}>{{ $user_group->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="menu_select" class="block text-sm font-medium">Pilih Menu</label>
+                    </div>
+                    <select id="menu_select" name="menu_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="">-- Pilih Group --</option>
+                        @foreach($menus as $menu)
+                            <option value="{{ $menu->id }}" {{ old('menu_id') == $menu->id ? 'selected' : '' }}>{{ $menu->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <table class="w-full border text-sm" id="productTable">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="border px-2 py-1">Aksi</th>
-                            <th class="border px-2 py-1">Nama Menu</th>
-                            <th class="border px-2 py-1" style="width: 5%;">
-                            <th class="border px-2 py-1">Kode</th>
-                            <th class="border px-2 py-1">Slug</th>
+                    <thead class="bg-gray-100 text-center">
+                        <tr>
+                            <th class="border px-2 py-1 text-left">Nama Menu</th>
+                            <th class="border px-2 py-1">Create</th>
+                            <th class="border px-2 py-1">View</th>
+                            <th class="border px-2 py-1">Update</th>
+                            <th class="border px-2 py-1">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -150,28 +171,28 @@
         footer.classList.remove('hidden');
 
         if (mode === 'create') {
-            title.innerText = 'Tambah Menu';
-            form.action = '/menu';
+            title.innerText = 'Tambah Role';
+            form.action = '/role-user';
             method.value = 'POST';
 
             document.querySelector('#productTable tbody').innerHTML = '';
-            rowCount = 0;
+            
 
-            addProductRow();
         }
 
         if (mode === 'view') {
-            title.innerText = 'Lihat Menu';
+            title.innerText = 'Lihat Role';
             form.action = '#';
             method.value = '';
+            data.disabled = 'view';
             fillForm(data);
             form.querySelectorAll('input[type="text"]').forEach(i => i.setAttribute('readonly', true));
             footer.classList.add('hidden');
         }
 
         if (mode === 'edit') {
-            title.innerText = 'Edit Menu';
-            form.action = `/menu/${data.id}`;
+            title.innerText = 'Edit Role';
+            form.action = `/role-user/${data.id}`;
             method.value = 'PUT';
             fillForm(data);
             
@@ -188,57 +209,43 @@
     }
 
     function fillForm(data) {
+        const disabled = data.disabled === 'view'; // true jika view mode   
+
+        // Set group select value
+        document.getElementById('user_group_select').value = data.group_user_id;
+        document.getElementById('menu_select').value = data.group_user_id;
+
+        // Jika perlu disable select juga
+        document.getElementById('user_group_select').disabled = disabled;
+        document.getElementById('menu_select').disabled = disabled;
+
         const tbody = document.querySelector('#productTable tbody');
         tbody.innerHTML = '';
-        rowCount = 0;
 
-        const parent = {
-            name: data.name,
-            seq: data.seq ?? 1,
-            code: data.code,
-            slug: data.slug,
-        };
+        data.details.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="border px-2 py-1">${item.menu_name}</td>
+                <td class="border px-2 py-1 text-center">
+                    <input type="checkbox" name="permissions[${item.menu_id}][can_create]" ${item.can_create ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                </td>
+                <td class="border px-2 py-1 text-center">
+                    <input type="checkbox" name="permissions[${item.menu_id}][can_view]" ${item.can_view ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                </td>
+                <td class="border px-2 py-1 text-center">
+                    <input type="checkbox" name="permissions[${item.menu_id}][can_update]" ${item.can_update ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                </td>
+                <td class="border px-2 py-1 text-center">
+                    <input type="checkbox" name="permissions[${item.menu_id}][can_delete]" ${item.can_delete ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
 
-        appendMenuRow(parent);
-
-        if (Array.isArray(data.children)) {
-            data.children.forEach(child => {
-                appendMenuRow(child, parent.code, parent.seq);
-            });
-        }
     }
 
-    function appendMenuRow(item, parentCode = null, parentSeq = 1) {
-        const tbody = document.querySelector('#productTable tbody');
-        const row = document.createElement('tr');
-
-        let isSubmenu = parentCode !== null;
-
-        let code = item.code || generateRandomCode();
-        let seq = item.seq || rowCount + 1;
-
-        row.innerHTML = `
-            <td class="border px-2 py-1 text-center space-x-1">
-                ${!isSubmenu ? `<button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>` : ''}
-                ${isSubmenu ? `<button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>` : ''}
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][name]" class="w-full border rounded px-2 py-1" value="${item.name || ''}">
-            </td>
-            <td class="border px-2 py-1">
-                <input type="number" name="items[${rowCount}][seq]" class="w-full border rounded px-2 py-1" value="${seq}" readonly>
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][code]" class="w-full border rounded px-2 py-1" value="${code}" readonly>
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][slug]" class="w-full border rounded px-2 py-1" value="${item.slug || ''}">
-            </td>
-        `;
-
-        tbody.appendChild(row);
-        rowCount++;
-    }
+    
 
     function showFullscreenLoader() {
         const loader = document.getElementById('fullscreenLoader');
@@ -252,7 +259,7 @@
 
     function handleAddGroupClick() {
         showFullscreenLoader();
-        fetch('/menu/create')
+        fetch('/role-user/create')
         .then(res => {
             if (!res.ok) throw new Error('Gagal memuat data');
             return res.json();
@@ -352,7 +359,7 @@
         showFullscreenLoader();
 
         try {
-            const response = await fetch(`/menu/${menuId}/edit`);
+            const response = await fetch(`/role-user/${menuId}/edit`);
             console.log(response);
             if (!response.ok) throw new Error('Gagal memuat data');
 
@@ -420,7 +427,7 @@
         showFullscreenLoader();
 
         try {
-            const response = await fetch(`/menu/${menuId}`, {
+            const response = await fetch(`/role-user/${menuId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -445,70 +452,64 @@
         }
     }
 
-    function generateRandomCode(length = 6) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let code = '';
-        for (let i = 0; i < length; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-    }
-
     let rowCount = 0;
 
-    function addProductRow(button = null) {
-        const tbody = document.querySelector('#productTable tbody');
-        const row = document.createElement('tr');
 
-        let kode = '';
-        let seq = '';
-        let namePlaceholder = 'Nama Menu';
-        let showAddButton = true;
+    document.getElementById('menu_select').addEventListener('change', async function () {
+        const groupId = this.value;
 
-        // Jika tidak ada tombol (berarti baris awal)
-        if (!button) {
-            kode = generateRandomCode();
-            seq = 1;
-            showAddButton = true;
-        } else {
-            // Baris sub-menu (klik dari tombol ➕)
-            const parentRow = button.closest('tr');
-            const parentCodeInput = parentRow.querySelector('input[name$="[code]"]');
-            const parentCode = parentCodeInput.value;
-
-            // Hitung jumlah sub dari parent yang ada
-            const subRows = Array.from(tbody.querySelectorAll('input[name$="[code]"]'))
-                .filter(input => input.value.startsWith(parentCode + '-'));
-
-            const subIndex = subRows.length + 1;
-            kode = `${parentCode}-${subIndex}`;
-            seq = parseInt(parentRow.querySelector('input[name$="[seq]"]').value + '' + subIndex);
-            namePlaceholder = 'Nama Sub Menu';
-            showAddButton = false;
+        if (!groupId) {
+            document.querySelector("#productTable tbody").innerHTML = '';
+            return;
         }
 
-        row.innerHTML = `
-            <td class="border px-2 py-1 text-center space-x-1">
-                ${showAddButton ? `<button type="button" onclick="addProductRow(this)" class="text-green-600 text-xl" title="Tambah Sub Menu">➕</button>` : ''}
-                ${!showAddButton ? `<button type="button" onclick="this.closest('tr').remove()" class="text-red-500" title="Hapus">🗑</button>` : ''}
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][name]" class="w-full border rounded px-2 py-1" placeholder="${namePlaceholder}">
-            </td>
-            <td class="border px-2 py-1">
-                <input type="number" name="items[${rowCount}][seq]" class="w-full border rounded px-2 py-1" value="${seq}" readonly>
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][code]" class="w-full border rounded px-2 py-1" value="${kode}" readonly>
-            </td>
-            <td class="border px-2 py-1">
-                <input type="text" name="items[${rowCount}][slug]" class="w-full border rounded px-2 py-1" placeholder="Slug">
-            </td>
-        `;
+        showFullscreenLoader();
 
-        // Tambahkan di akhir
-        tbody.appendChild(row);
-        rowCount++;
+        try {
+            const response = await fetch(`/role-user/${groupId}/menus`);
+            if (!response.ok) throw new Error('Gagal ambil data menu');
+
+            const menus = await response.json();
+            populateMenuTableFromGroup(menus); // Panggil fungsi buat render
+        } catch (error) {
+            alert('Terjadi kesalahan saat memuat menu');
+            console.error(error);
+        } finally {
+            hideFullscreenLoader();
+        }
+    });
+
+    function populateMenuTableFromGroup(menus) {
+        const tbody = document.querySelector("#productTable tbody");
+        tbody.innerHTML = "";
+
+        menus.forEach(menu => {
+            const id = menu.id;
+
+            const row = document.createElement("tr");
+            row.classList.add("text-center");
+
+            row.innerHTML = `
+                <td class="border px-2 py-1 text-left">
+                    <input type="hidden" name="permissions[${id}][menu_id]" value="${id}">
+                    ${menu.name}
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="checkbox" name="permissions[${id}][can_create]" value="1">
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="checkbox" name="permissions[${id}][can_view]" value="1">
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="checkbox" name="permissions[${id}][can_update]" value="1">
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="checkbox" name="permissions[${id}][can_delete]" value="1">
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
     }
 
 

@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('group_menu_permissions', function (Blueprint $table) {
+        Schema::create('role_user_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('group_id')->constrained('group_users')->onDelete('cascade');
+            $table->foreignId('role_user_id')->constrained('role_user')->onDelete('cascade');
             $table->foreignId('menu_id')->constrained('menu')->onDelete('cascade');
             $table->boolean('can_view')->default(false);
             $table->boolean('can_create')->default(false);
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('group_menu_permissions');
+        Schema::dropIfExists('role_user_details');
     }
 };

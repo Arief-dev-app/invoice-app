@@ -64,7 +64,7 @@
                                         Menu
                                     </a>
                                 </li>
-                                 {{--<li>
+                                 <li>
                                     <a href="{{ route('role-user.index') }}" class="{{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
                                         Role User
                                     </a>
@@ -73,7 +73,7 @@
                                     <a href="{{ route('user.index') }}" class="{{ request()->routeIs('user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
                                         User
                                     </a>
-                                </li> --}}
+                                </li>
                             </ul>
                         </li>
                         {{-- Dinamis Menu dari DB --}}

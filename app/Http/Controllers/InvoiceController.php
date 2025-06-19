@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Models\Menu;
 
 class InvoiceController extends Controller
 {
@@ -80,7 +81,10 @@ class InvoiceController extends Controller
              (object) ['id' => 10, 'nama' => 'Produk J', 'harga' => 55000],
         ]);
 
-        return view('admin.invoice.index', compact('invoices','products','search'));
+        $menus = Menu::with('children')->whereNull('parent_id')->get();
+
+
+        return view('admin.invoice.index', compact('invoices','menus','products','search'));
     }
 
     /**
