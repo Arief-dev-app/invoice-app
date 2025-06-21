@@ -21,10 +21,13 @@ class RoleUserController extends Controller
 
         $menus = Menu::with('children')->whereNull('parent_id')->get();
 
+        $menu_header = Menu::where('header_id', 1)->get();
+        $menu_detail = Menu::whereNotNull('parent_id')->get();
+
         $group = GroupUser::all();
         $roles = RoleUser::all();
 
-        return view('admin.role-user.index', compact('roles','group','menus', 'search'));
+        return view('admin.role-user.index', compact('menu_header','menu_detail','roles','group','menus', 'search'));
     }
 
     /**

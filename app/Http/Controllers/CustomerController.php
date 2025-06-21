@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\Customer;
 use App\Models\Menu;
+use App\Models\User;
+use App\Models\RoleUser;
+use App\Models\RoleUserDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; 
 use Illuminate\Pagination\Paginator;
+use App\Http\Controllers\BaseController;
 
-class ProductController extends Controller
+class CustomerController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -19,12 +23,20 @@ class ProductController extends Controller
         Paginator::useTailwind();
     }
 
+    public function data(){
+        return [
+            'url' => '/customer',
+            'title' => 'Customer',
+            'kode' => 'MENU01-2'
+        ];
+    }
+
     public function index(Request $request)
     {
         $search   = $request->query('search');
         $perPage  = $request->query('per_page', 10); // default 10 jika tidak ada
-    
-        $products = Product::query()
+        
+        $customer = Customer::query()
             ->where('user_id', auth()->id()) // tetap filter berdasarkan user
             ->when($search, function ($query, $search) {
                 return $query->where('nama', 'like', "%{$search}%");
@@ -32,27 +44,47 @@ class ProductController extends Controller
             ->latest()
             ->paginate($perPage)
             ->appends(['search' => $search, 'per_page' => $perPage]); // agar pagination tetap bawa query string
-    
+        
         if ($request->wantsJson()) {
-            return response()->json($products);
+            return response()->json($customer);
         }
-    
-        $menu_header = Menu::where('header_id', 1)->get();
-        $menu_detail = Menu::whereNotNull('parent_id')->get();
-    
-        return view('admin.product.index', compact(
-            'products', 'search', 'menu_header', 'menu_detail'
-        ));
+
+
+        $menus = $this->getAccessibleMenus();
+        $default = $this->data();
+
+        return view('admin.customer.index', array_merge($default, [
+            'customer'     => $customer, 
+            'search'       => $search, 
+            'menu_header'  => $menus['menu_header'],
+            'menu_detail'  => $menus['menu_detail'],
+        ]));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $data = [];
+        // 
+    }
+    
+    public function cekAkses(Request $request)
+    {
 
-        return response()->json($data);
+        try {
+            $this->cekAccessMenu($request);
+    
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Akses diperbolehkan',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 403);
+        }
     }
 
     /**
@@ -66,11 +98,11 @@ class ProductController extends Controller
 
         try {
             // Simpan RoleUser utama
-            $product = Product::create([
-                'nama' => $request->nama,
-                'harga_jual' => $request->harga_jual,
-                'harga_beli' => $request->harga_beli,
-                'stock' => 0,
+            $customer = Customer::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
                 'user_id' => auth()->id()
             ]);
 
@@ -98,8 +130,8 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        $product = Product::findOrFail($id);
-        return response()->json($product);
+        $customer = Customer::findOrFail($id);
+        return response()->json($customer);
     }
 
     /**
@@ -107,8 +139,8 @@ class ProductController extends Controller
      */
     public function edit(string $id)
     {
-        $product = Product::findOrFail($id);
-        return response()->json($product);
+        $customer = Customer::findOrFail($id);
+        return response()->json($customer);
     }
 
     /**
@@ -116,29 +148,36 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $permissions = $request->input('permissions', []);
+
         DB::beginTransaction();
 
         try {
-            $product = Product::findOrFail($id);
+            $customer = Customer::findOrFail($id);
 
             // Update data utama
-            $product->update([
-                'nama' => $request->nama,
-                'harga_jual' => $request->harga_jual,
-                'harga_beli' => $request->harga_beli,
+            $customer->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
                 'user_id' => auth()->id()
             ]);
-            
 
             DB::commit();
 
-            return response()->json(['message' => 'Data berhasil diperbarui.']);
+            return response()->json(['message' => 'Data berhasil diubah.'], 200);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error('Gagal simpan role user: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat menyimpan data.',
-                'error_detail' => $e->getMessage()
+                'error_detail' => $e->getMessage(),
             ], 500);
         }
     }
@@ -151,9 +190,9 @@ class ProductController extends Controller
         DB::beginTransaction();
         try {
     
-            $product = Product::findOrFail($id);
+            $customer = Customer::findOrFail($id);
        
-            $product->delete();
+            $customer->delete();
     
             DB::commit();
     

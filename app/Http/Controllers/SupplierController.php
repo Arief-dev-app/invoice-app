@@ -2,35 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Supplier;
 use App\Models\Menu;
-use App\Models\User;
-use App\Models\RoleUser;
-use App\Models\RoleUserDetail;
-use App\Models\GroupUser;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log; 
+use Illuminate\Pagination\Paginator;
+use Illuminate\Http\Request;
 
-
-class UserController extends Controller
+class SupplierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+    public function boot()
+    {
+        Paginator::useTailwind();
+    }
+
     public function index(Request $request)
     {
-        $search = $request->query('search');
-
-        $menus = Menu::with('children')->whereNull('parent_id')->get();
+        $search   = $request->query('search');
+        $perPage  = $request->query('per_page', 10); // default 10 jika tidak ada
+    
+        $data = Supplier::query()
+            ->where('user_id', auth()->id()) // tetap filter berdasarkan user
+            ->when($search, function ($query, $search) {
+                return $query->where('nama', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate($perPage)
+            ->appends(['search' => $search, 'per_page' => $perPage]); // agar pagination tetap bawa query string
+    
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+    
         $menu_header = Menu::where('header_id', 1)->get();
         $menu_detail = Menu::whereNotNull('parent_id')->get();
 
-        $group = GroupUser::all();
-        $roles = RoleUser::all();
-        $users = User::all();
-
-        return view('admin.user.index', compact('menu_header','menu_detail','menus','users','roles','group', 'search'));
+        return view('admin.supplier.index', compact(
+            'data', 'search', 'menu_header', 'menu_detail'
+        ));
     }
 
     /**
@@ -38,9 +50,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        $data = [];
-
-        return response()->json($data);
+        //
     }
 
     /**
@@ -49,16 +59,17 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $permissions = $request->input('permissions', []);
-       
+
         DB::beginTransaction();
 
         try {
             // Simpan RoleUser utama
-            $User = User::create([
-                'name' => $request->username,
+            $data = Supplier::create([
+                'name' => $request->name,
                 'email' => $request->email,
-                'group_id' => $request->user_group_id,
-                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'user_id' => auth()->id()
             ]);
 
 
@@ -83,59 +94,56 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $data = Supplier::findOrFail($id);
+        return response()->json($data);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request, $id)
+    public function edit(string $id)
     {
-        $user = User::with(['group'])->findOrFail($id);
-        $mode = $request->query('mode', 'edit');
-
-
-        return response()->json([
-            'menus' => [
-                'id' => $user->id,
-                'group_user_id' => $user->group_id,
-                'username' => $user->name,
-                'email' => $user->email,
-            ],
-            'disabled' => $mode
-        ]);
+        $data = Supplier::findOrFail($id);
+        return response()->json($data);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
+        $permissions = $request->input('permissions', []);
+
         DB::beginTransaction();
 
         try {
-            $role = User::findOrFail($id);
+            $data = Supplier::findOrFail($id);
 
             // Update data utama
-            $role->update([
-                'name' => $request->username,
+            $data->update([
+                'name' => $request->name,
                 'email' => $request->email,
-                'group_id' => $request->user_group_id,
-                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'user_id' => auth()->id()
             ]);
-
 
             DB::commit();
 
-            return response()->json(['message' => 'Data berhasil diperbarui.']);
+            return response()->json(['message' => 'Data berhasil diubah.'], 200);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error('Gagal simpan role user: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat menyimpan data.',
-                'error_detail' => $e->getMessage()
+                'error_detail' => $e->getMessage(),
             ], 500);
         }
     }
@@ -143,14 +151,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
     
-            $user = User::findOrFail($id);
-
-            $user->delete();
+            $data = Supplier::findOrFail($id);
+       
+            $data->delete();
     
             DB::commit();
     

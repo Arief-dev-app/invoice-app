@@ -21,7 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
     Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
 
-    Route::resource('product', \App\Http\Controllers\ProductController::class);
+
     Route::resource('invoice', \App\Http\Controllers\InvoiceController::class);
     Route::get('/invoice/{id}/print', [\App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
 
@@ -34,6 +34,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/role-user/{id}/menus', [\App\Http\Controllers\RoleUserController::class, 'getMenusByGroup']);
     
     Route::resource('user', \App\Http\Controllers\UserController::class);
+
+     // Master
+     Route::resource('product', \App\Http\Controllers\ProductController::class);
+     Route::post('product/{id}', [\App\Http\Controllers\ProductController::class, 'destroy']);
+
+     Route::resource('customer', \App\Http\Controllers\CustomerController::class);
+     Route::post('customer/cekAkses', [\App\Http\Controllers\CustomerController::class, 'cekAkses']);
+     
+     Route::resource('supplier', \App\Http\Controllers\SupplierController::class);
 
     
 

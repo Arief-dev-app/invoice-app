@@ -19,7 +19,10 @@ class MenuController extends Controller
     {
         $menus = Menu::with('children')->whereNull('parent_id')->get();
 
-        return view('admin.menu.index', compact('menus'));
+        $menu_header = Menu::where('header_id', 1)->get();
+        $menu_detail = Menu::whereNotNull('parent_id')->get();
+
+        return view('admin.menu.index', compact('menu_header','menu_detail','menus'));
     }
 
     /**

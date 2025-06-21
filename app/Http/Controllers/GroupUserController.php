@@ -15,7 +15,10 @@ class GroupUserController extends Controller
     {
         $groupUsers = GroupUser::all();
         $menus = Menu::with('children')->whereNull('parent_id')->get();
-        return view('admin.group_user.index', compact('groupUsers','menus'));
+
+        $menu_header = Menu::where('header_id', 1)->get();
+        $menu_detail = Menu::whereNotNull('parent_id')->get();
+        return view('admin.group_user.index', compact('menu_header','menu_detail','groupUsers','menus'));
     }
 
     /**

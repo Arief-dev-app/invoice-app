@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @include('admin.product.form')
+    @include('admin.supplier.form')
 @endsection
 
 @push('scripts')
@@ -59,49 +59,56 @@
     // ===============================
     // 3. MODAL HANDLING
     // ===============================
-    function openGlobalModal(title = 'Tambah Produk', product = null, mode = 'create') {
+    function openGlobalModal(title = 'Tambah Produk', data = null, mode = 'create') {
         const modal = document.getElementById('globalModal');
         const form = document.getElementById('productForm');
         const methodInput = document.getElementById('formMethod');
         const namaInput = document.getElementById('formNama');
-        const hargaBeliInput = document.getElementById('formHargaBeli');
-        const hargaJualInput = document.getElementById('formHargaJual');
+        const emailInput = document.getElementById('formEmail');
+        const phoneInput = document.getElementById('formPhone');
+        const alamatInput = document.getElementById('formAlamat');
         const simpanBtn = form.querySelector('button[type="submit"]');
 
         document.getElementById('globalModalTitle').innerText = title;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
 
-        if (mode === 'edit' && product) {
-            form.action = `/product/${product.id}`;
+        if (mode === 'edit' && data) {
+            form.action = `/supplier/${data.id}`;
             methodInput.value = 'PUT';
-            namaInput.value = product.nama ?? '';
-            hargaBeliInput.value = product.harga_beli ?? '';
-            hargaJualInput.value = product.harga_jual ?? '';
+            namaInput.value = data.name ?? '';
+            emailInput.value = data.email ?? '';
+            phoneInput.value = data.phone ?? '';
+            alamatInput.value = data.address ?? '';
             simpanBtn.classList.remove('hidden');
             namaInput.readOnly = false;
-            hargaBeliInput.readOnly = false;
-            hargaJualInput.readOnly = false;
-        } else if (mode === 'view' && product) {
+            emailInput.readOnly = false;
+            phoneInput.readOnly = false;
+            alamatInput.readOnly = false;
+        } else if (mode === 'view' && data) {
             form.action = '#';
             methodInput.value = 'GET';
-            namaInput.value = product.nama ?? '';
-            hargaBeliInput.value = product.harga_beli ?? '';
-            hargaJualInput.value = product.harga_jual ?? '';
+            namaInput.value = data.name ?? '';
+            emailInput.value = data.email ?? '';
+            phoneInput.value = data.phone ?? '';
+            alamatInput.value = data.address ?? '';
             simpanBtn.classList.add('hidden');
             namaInput.readOnly = true;
-            hargaBeliInput.readOnly = true;
-            hargaJualInput.readOnly = true;
+            emailInput.readOnly = true;
+            phoneInput.readOnly = true;
+            alamatInput.readOnly = true;
         } else {
-            form.action = `/product`;
+            form.action = `/supplier`;
             methodInput.value = 'POST';
             namaInput.value = '';
-            hargaBeliInput.value = '';
-            hargaJualInput.value = '';
+            emailInput.value = '';
+            phoneInput.value = '';
+            alamatInput.value = '';
             simpanBtn.classList.remove('hidden');
             namaInput.readOnly = false;
-            hargaBeliInput.readOnly = false;
-            hargaJualInput.readOnly = false;
+            emailInput.readOnly = false;
+            phoneInput.readOnly = false;
+            alamatInput.readOnly = false;
         }
     }
 
@@ -137,10 +144,10 @@
             showLoader();
 
             const data = {
-                nama: form.nama.value,
-                harga_beli: form.harga_beli.value,
-                harga_jual: form.harga_jual.value,
-                user_id: form.user_id.value,
+                name: form.name.value,
+                email: form.email.value,
+                phone: form.phone.value,
+                address: form.address.value,
             };
 
             const method = document.getElementById('formMethod').value;
@@ -176,7 +183,7 @@
     // 5. DATA FETCHING
     // ===============================
     function loadProducts(search = '') {
-        const url = `/product?search=${search}&per_page=${perPage}`;
+        const url = `/supplier?search=${search}&per_page=${perPage}`;
         fetch(url, { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(data => {
@@ -207,18 +214,18 @@
 
     function renderProducts(data) {
         let html = '';
-        data.data.forEach((product, index) => {
+        data.data.forEach((data, index) => {
             html += `
                 <tr>
                     <td class="p-2 border">${index + 1}</td>
                     <td class="p-2 border space-x-2">
-                        <button onclick="fetchMenuAndOpenModal('Lihat Produk', ${product.id}, 'view')">👁</button>
-                        <button onclick="fetchMenuAndOpenModal('Edit Produk', ${product.id}, 'edit')">✏️</button>
-                        <button onclick="handleDeleteAction(() => deleteMenu(${product.id}))">🗑</button>
+                        <button onclick="fetchMenuAndOpenModal('Lihat Produk', ${data.id}, 'view')">👁</button>
+                        <button onclick="fetchMenuAndOpenModal('Edit Produk', ${data.id}, 'edit')">✏️</button>
+                        <button onclick="handleDeleteAction(() => deleteMenu(${data.id}))">🗑</button>
                     </td>
-                    <td class="p-2 border">${product.nama}</td>
-                    <td class="p-2 border">Rp ${parseInt(product.harga_jual).toLocaleString('id-ID')}</td>
-                    <td class="p-2 border">Rp ${parseInt(product.harga_beli).toLocaleString('id-ID')}</td>
+                    <td class="p-2 border">${data.name}</td>
+                    <td class="p-2 border">${(data.email)}</td>
+                    <td class="p-2 border">${(data.phone)}</td>
                 </tr>
             `;
         });
@@ -235,7 +242,7 @@
             html += `
                 <button
                     class="px-3 py-1 rounded border text-sm ${active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'} ${disabled ? 'cursor-not-allowed bg-gray-100 text-gray-400' : ''}"
-                    ${!disabled ? `onclick="loadProductsByUrl('/product?page=${page}&per_page=${perPage}')"` : 'disabled'}>
+                    ${!disabled ? `onclick="loadProductsByUrl('/supplier?page=${page}&per_page=${perPage}')"` : 'disabled'}>
                     ${label ?? page}
                 </button>
             `;
@@ -302,7 +309,7 @@
     async function fetchMenuAndOpenModal(title, id, mode = 'view') {
         try {
             showLoader();
-            const res = await fetch(`/product/${id}`);
+            const res = await fetch(`/supplier/${id}`);
             if (!res.ok) throw new Error('Gagal mengambil data produk');
             const product = await res.json();
             hideLoader();
@@ -335,7 +342,7 @@
     async function deleteMenu(id) {
         showLoader();
         try {
-            const res = await fetch(`/product/${id}`, {
+            const res = await fetch(`/supplier/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

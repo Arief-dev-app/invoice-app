@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @include('admin.product.form')
+    @include('admin.customer.form')
 @endsection
 
 @push('scripts')
@@ -9,6 +9,7 @@
     // ===============================
     // 1. VARIABEL GLOBAL
     // ===============================
+    let url = "{{ $url }}";
     let perPage = 10;
     let deleteCallback = null;
 
@@ -43,6 +44,23 @@
             setTimeout(() => alert.remove(), 500);
         }, 2000);
     }
+    
+    function showErrorAlert(message) {
+        const alert = document.createElement('div');
+        alert.id = 'errorAlert';
+        alert.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded shadow-lg flex items-center space-x-2 z-50 transition-opacity duration-500';
+        alert.innerHTML = `
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(alert);
+        setTimeout(() => {
+            alert.classList.add('opacity-0');
+            setTimeout(() => alert.remove(), 500);
+        }, 2000);
+    }
 
     function renderDataSummary(data) {
         const summaryEl = document.getElementById('dataSummary');
@@ -59,49 +77,74 @@
     // ===============================
     // 3. MODAL HANDLING
     // ===============================
-    function openGlobalModal(title = 'Tambah Produk', product = null, mode = 'create') {
+    async function openGlobalModal(title = 'Tambah Customer', data = null, mode = 'create') {
         const modal = document.getElementById('globalModal');
         const form = document.getElementById('productForm');
         const methodInput = document.getElementById('formMethod');
         const namaInput = document.getElementById('formNama');
-        const hargaBeliInput = document.getElementById('formHargaBeli');
-        const hargaJualInput = document.getElementById('formHargaJual');
+        const emailInput = document.getElementById('formEmail');
+        const phoneInput = document.getElementById('formPhone');
+        const alamatInput = document.getElementById('formAlamat');
         const simpanBtn = form.querySelector('button[type="submit"]');
+
+        let postData = {
+            url: "{{ $url }}",     // "/customer"
+            kode: "{{ 'edit' }}"    // "MENU01-2"
+        };
+
+
+        const { response, data2 } = await cekAkses(`${postData.url}/cekAkses`, postData);
+
+       
 
         document.getElementById('globalModalTitle').innerText = title;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
 
-        if (mode === 'edit' && product) {
-            form.action = `/product/${product.id}`;
+        if (mode === 'edit' && data) {
+            // const btnSimpan = document.getElementById('btnSimpan');
+        if (btnSimpan) {
+            if (mode === 'edit' && !response.ok) {
+                simpanBtn.classList.add('hidden');
+            } else {
+                simpanBtn.classList.remove('hidden');
+            }
+        }
+            form.action = `/customer/${data.id}`;
             methodInput.value = 'PUT';
-            namaInput.value = product.nama ?? '';
-            hargaBeliInput.value = product.harga_beli ?? '';
-            hargaJualInput.value = product.harga_jual ?? '';
-            simpanBtn.classList.remove('hidden');
+            namaInput.value = data.name ?? '';
+            emailInput.value = data.email ?? '';
+            phoneInput.value = data.phone ?? '';
+            alamatInput.value = data.address ?? '';
+            // simpanBtn.classList.remove('hidden');
             namaInput.readOnly = false;
-            hargaBeliInput.readOnly = false;
-            hargaJualInput.readOnly = false;
-        } else if (mode === 'view' && product) {
+            emailInput.readOnly = false;
+            phoneInput.readOnly = false;
+            alamatInput.readOnly = false;
+        } else if (mode === 'view' && data) {
             form.action = '#';
             methodInput.value = 'GET';
-            namaInput.value = product.nama ?? '';
-            hargaBeliInput.value = product.harga_beli ?? '';
-            hargaJualInput.value = product.harga_jual ?? '';
+            namaInput.value = data.name ?? '';
+            emailInput.value = data.email ?? '';
+            phoneInput.value = data.phone ?? '';
+            alamatInput.value = data.address ?? '';
             simpanBtn.classList.add('hidden');
             namaInput.readOnly = true;
-            hargaBeliInput.readOnly = true;
-            hargaJualInput.readOnly = true;
+            emailInput.readOnly = true;
+            phoneInput.readOnly = true;
+            alamatInput.readOnly = true;
         } else {
-            form.action = `/product`;
+            form.action = url;
             methodInput.value = 'POST';
             namaInput.value = '';
-            hargaBeliInput.value = '';
-            hargaJualInput.value = '';
+            emailInput.value = '';
+            phoneInput.value = '';
+            alamatInput.value = '';
             simpanBtn.classList.remove('hidden');
             namaInput.readOnly = false;
-            hargaBeliInput.readOnly = false;
-            hargaJualInput.readOnly = false;
+            emailInput.readOnly = false;
+            phoneInput.readOnly = false;
+            alamatInput.readOnly = false;
         }
     }
 
@@ -137,10 +180,10 @@
             showLoader();
 
             const data = {
-                nama: form.nama.value,
-                harga_beli: form.harga_beli.value,
-                harga_jual: form.harga_jual.value,
-                user_id: form.user_id.value,
+                name: form.name.value,
+                email: form.email.value,
+                phone: form.phone.value,
+                address: form.address.value,
             };
 
             const method = document.getElementById('formMethod').value;
@@ -176,7 +219,7 @@
     // 5. DATA FETCHING
     // ===============================
     function loadProducts(search = '') {
-        const url = `/product?search=${search}&per_page=${perPage}`;
+        const url = `/customer?search=${search}&per_page=${perPage}`;
         fetch(url, { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(data => {
@@ -207,18 +250,18 @@
 
     function renderProducts(data) {
         let html = '';
-        data.data.forEach((product, index) => {
+        data.data.forEach((data, index) => {
             html += `
                 <tr>
                     <td class="p-2 border">${index + 1}</td>
                     <td class="p-2 border space-x-2">
-                        <button onclick="fetchMenuAndOpenModal('Lihat Produk', ${product.id}, 'view')">👁</button>
-                        <button onclick="fetchMenuAndOpenModal('Edit Produk', ${product.id}, 'edit')">✏️</button>
-                        <button onclick="handleDeleteAction(() => deleteMenu(${product.id}))">🗑</button>
+                        <button onclick="fetchMenuAndOpenModal('Lihat Produk', ${data.id}, 'view')">👁</button>
+                        <button onclick="fetchMenuAndOpenModal('Edit Produk', ${data.id}, 'edit')">✏️</button>
+                        <button onclick="handleDeleteAction(() => deleteMenu(${data.id}))">🗑</button>
                     </td>
-                    <td class="p-2 border">${product.nama}</td>
-                    <td class="p-2 border">Rp ${parseInt(product.harga_jual).toLocaleString('id-ID')}</td>
-                    <td class="p-2 border">Rp ${parseInt(product.harga_beli).toLocaleString('id-ID')}</td>
+                    <td class="p-2 border">${data.name}</td>
+                    <td class="p-2 border">${(data.email)}</td>
+                    <td class="p-2 border">${(data.phone)}</td>
                 </tr>
             `;
         });
@@ -235,7 +278,7 @@
             html += `
                 <button
                     class="px-3 py-1 rounded border text-sm ${active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'} ${disabled ? 'cursor-not-allowed bg-gray-100 text-gray-400' : ''}"
-                    ${!disabled ? `onclick="loadProductsByUrl('/product?page=${page}&per_page=${perPage}')"` : 'disabled'}>
+                    ${!disabled ? `onclick="loadProductsByUrl('/customer?page=${page}&per_page=${perPage}')"` : 'disabled'}>
                     ${label ?? page}
                 </button>
             `;
@@ -291,22 +334,86 @@
     // ===============================
     // 6. DELETE HANDLING
     // ===============================
-    function handleAddGroupClick() {
+    async function handleAddGroupClick() {
+        // showLoader();
+        // setTimeout(() => {
+        //     hideLoader();
+        //     openGlobalModal('Tambah Produk');
+        // }, 300);
+        let postData = {
+            url: "{{ $url }}",     // "/customer"
+            kode: "{{ 'create' }}"    // "MENU01-2"
+        };
+
         showLoader();
-        setTimeout(() => {
+
+        try {
+
+            const { response, data } = await cekAkses(`${postData.url}/cekAkses`, postData);
+
             hideLoader();
-            openGlobalModal('Tambah Produk');
-        }, 300);
+
+            if (!response.ok) {
+                showErrorAlert(data.message || 'Terjadi kesalahan');
+                return; // hentikan eksekusi
+            }
+
+            if (data.status === 'ok') {
+                openGlobalModal('Tambah Customer');
+            }
+
+
+        }catch (err) {
+            hideLoader();
+            showErrorAlert(err.message || 'Terjadi kesalahan saat memproses');
+        }
+
     }
 
+    async function cekAkses(endpoint, data) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(data)
+        });
+
+        const json = await response.json();
+        return { response, data: json };
+    }
+    
+
     async function fetchMenuAndOpenModal(title, id, mode = 'view') {
+
+        let postData = {
+            url: "{{ $url }}",     // "/customer"
+            kode: "{{ 'view' }}"    // "MENU01-2"
+        };
+
         try {
             showLoader();
-            const res = await fetch(`/product/${id}`);
-            if (!res.ok) throw new Error('Gagal mengambil data produk');
-            const product = await res.json();
+            const { response, data } = await cekAkses(`${postData.url}/cekAkses`, postData);
+
             hideLoader();
-            openGlobalModal(title, product, mode);
+
+            if (!response.ok) {
+                showErrorAlert(data.message || 'Terjadi kesalahan');
+                return; // hentikan eksekusi
+            }
+
+            if (data.status === 'ok') {
+                
+                const res = await fetch(`/customer/${id}`);
+                if (!res.ok) throw new Error('Gagal mengambil data produk');
+                const product = await res.json();
+                hideLoader();
+                openGlobalModal(title, product, mode);
+            }
+
+
         } catch (err) {
             hideLoader();
             alert(err.message);
@@ -335,21 +442,37 @@
     async function deleteMenu(id) {
         showLoader();
         try {
-            const res = await fetch(`/product/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                },
-                body: JSON.stringify({ _method: 'DELETE' })
-            });
-            const result = await res.json();
-            if (res.ok) {
-                showSuccessAlert(result.message || 'Produk berhasil dihapus');
-                setTimeout(() => window.location.reload(), 500);
-            } else {
-                alert(result.message || 'Gagal menghapus produk.');
+
+            let postData = {
+                url: "{{ $url }}",     // "/customer"
+                kode: "{{ 'delete' }}"    // "MENU01-2"
+            };
+
+            const { response, data } = await cekAkses(`${postData.url}/cekAkses`, postData);
+
+            if (!response.ok) {
+                showErrorAlert(data.message || 'Terjadi kesalahan');
+                return;
             }
+
+            if (data.status === 'ok') {         
+                const res = await fetch(`/customer/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: JSON.stringify({ _method: 'DELETE' })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showSuccessAlert(result.message || 'Produk berhasil dihapus');
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    alert(result.message || 'Gagal menghapus produk.');
+                }
+            }
+
         } catch (err) {
             console.error('Gagal hapus:', err);
             alert('Terjadi kesalahan saat menghapus.');

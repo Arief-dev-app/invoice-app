@@ -21,95 +21,99 @@
         <div class="min-h-screen flex">
 
             <!-- Sidebar -->
-            <aside class="w-64 bg-white shadow-md h-screen fixed">
-                <div class="p-6 text-xl font-bold border-b">  
-                    <a href="{{ route('dashboard') }}">
-                       <x-application-logo class="h-6 w-auto fill-current text-gray-800" />
-                    </a>
-                </div>
-                <nav class="mt-4 px-4">
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('company.index') }}" class="{{ request()->routeIs('company.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                Company
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('product.index') }}" class="{{ request()->routeIs('product.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                Product
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('invoice.index') }}" class="{{ request()->routeIs('invoice.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                Invoice
-                            </a>
-                        </li>
-                        <li x-data="{ open: false }" class="relative">
-                            <button @click="open = !open" class="w-full text-left py-2 {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                Auth
-                            </button>
-                            <ul x-show="open" class="ml-4 mt-1 space-y-1" x-cloak>
-                                <li>
-                                    <a href="{{ route('group-user.index') }}" class="{{ request()->routeIs('group-user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        User Group
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('menu.index') }}" class="{{ request()->routeIs('menu.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        Menu
-                                    </a>
-                                </li>
-                                 <li>
-                                    <a href="{{ route('role-user.index') }}" class="{{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        Role User
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('user.index') }}" class="{{ request()->routeIs('user.index') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        User
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        {{-- Dinamis Menu dari DB --}}
-                        @foreach ($menus as $menu)
-                            @if ($menu->children->isNotEmpty())
-                                <li x-data="{ open: false }" class="relative">
-                                    <button @click="open = !open" class="w-full text-left py-2 {{ request()->is(strtolower($menu->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        {{ $menu->name }}
+            <aside class="w-64 bg-white shadow-md h-screen fixed overflow-hidden">
+                <div class="h-full flex flex-col">
+                    <!-- Logo / Header -->
+                    <div class="p-6 text-xl font-bold border-b">
+                        <a href="{{ route('dashboard') }}">
+                            <x-application-logo class="h-6 w-auto fill-current text-gray-800" />
+                        </a>
+                    </div>
+
+                    <!-- Navigasi Scrollable -->
+                    <nav class="flex-1 overflow-y-auto px-4 mt-4">
+                        <ul class="space-y-2">
+
+                            {{-- Static Menu: Auth --}}
+                            <li x-data="{ open: {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'true' : 'false' }} }" class="relative">
+                                <button @click="open = !open"
+                                    class="w-full text-left py-2 px-2 flex justify-between items-center rounded hover:bg-gray-200 transition
+                                    {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                    <span>Auth</span>
+                                    <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <ul x-show="open" x-cloak class="ml-4 mt-1 space-y-1">
+                                    <li>
+                                        <a href="{{ route('group-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('group-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                            User Group
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('menu.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('menu.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                            Menu
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('role-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                            Role User
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                            User
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            {{-- Dynamic Menus --}}
+                            @foreach ($menu_header as $menu)
+                                @php
+                                    $children = $menu_detail->where('parent_id', $menu->id);
+                                    $isActive = $children->pluck('slug')->filter()->contains(function ($slug) {
+                                        return request()->is(ltrim($slug, '/') . '*');
+                                    });
+                                @endphp
+
+                                <li x-data="{ open: {{ $isActive ? 'true' : 'false' }} }" class="relative">
+                                    <button @click="open = !open"
+                                        class="w-full text-left py-2 px-2 flex justify-between items-center rounded hover:bg-gray-200 transition
+                                        {{ $isActive ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                        <span>{{ $menu->name }}</span>
+                                        <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
                                     </button>
-                                    <ul x-show="open" class="ml-4 mt-1 space-y-1" x-cloak>
-                                        @foreach ($menu->children as $child)
+                                    <ul x-show="open" x-cloak class="ml-4 mt-1 space-y-1">
+                                        @foreach ($children as $child)
                                             <li>
-                                                <a href="{{ url($child->slug) }}" class="{{ request()->is(strtolower($child->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
+                                                <a href="{{ url($child->slug) }}"
+                                                class="block px-2 py-1 rounded hover:bg-gray-200 transition 
+                                                {{ request()->is(ltrim($child->slug, '/') . '*') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
                                                     {{ $child->name }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                 </li>
-                            @else
-                                <li>
-                                    <a href="{{ url($menu->slug) }}" class="{{ request()->is(strtolower($menu->slug) . '*') ? 'text-blue-600 font-bold' : 'text-gray-700' }}">
-                                        {{ $menu->name }}
-                                    </a>
-                                </li>
-                            @endif
-                        @endforeach
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="w-full text-left py-2 text-red-500 hover:text-red-700">Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </nav>
+                            @endforeach
+
+                            {{-- Logout --}}
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left py-2 px-2 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition">Logout</button>
+                                </form>
+                            </li>
+
+                        </ul>
+                    </nav>
+                </div>
             </aside>
+
+            
 
             <!-- Main content -->
             <div class="flex-1 ml-64">
