@@ -24,10 +24,9 @@ class RoleUserController extends Controller
         $menu_header = Menu::where('header_id', 1)->get();
         $menu_detail = Menu::whereNotNull('parent_id')->get();
 
-        $group = GroupUser::all();
         $roles = RoleUser::all();
 
-        return view('admin.role-user.index', compact('menu_header','menu_detail','roles','group','menus', 'search'));
+        return view('admin.role-user.index', compact('menu_header','menu_detail','roles','menus', 'search'));
     }
 
     /**
@@ -98,29 +97,77 @@ class RoleUserController extends Controller
      */
     public function edit(Request $request, $id)
     {
-        $role = RoleUser::with(['groupUser', 'details.menu'])->findOrFail($id);
+        $role = RoleUser::with(['details.menu'])->findOrFail($id);
         $mode = $request->query('mode', 'edit');
+        
 
-        $structuredDetails = $role->details->map(function ($detail) {
+        $allMenus = Menu::all();
+        
+
+        $allMenus = Menu::orderBy('parent_id')->orderBy('id')->get();
+
+        // Ambil role detail (hanya submenu)
+        $roleDetails = RoleUserDetail::where('role_user_id', $role->id)
+            ->get()
+            ->keyBy('menu_id');
+
+        // Ambil hanya header
+        $headers = $allMenus->whereNull('parent_id');
+
+        // Susun structured details: header dan submenu
+        $structuredDetails = $headers->map(function ($header) use ($allMenus, $roleDetails) {
+            // Ambil semua submenu dari header ini
+            $submenus = $allMenus->where('parent_id', $header->id)->map(function ($submenu) use ($roleDetails) {
+                $detail = $roleDetails->get($submenu->id);
+
+                return [
+                    'menu_id' => $submenu->id,
+                    'menu_name' => $submenu->name,
+                    'parent_id' => $submenu->parent_id,
+                    'can_create' => (bool) optional($detail)->can_create,
+                    'can_view' => (bool) optional($detail)->can_view,
+                    'can_update' => (bool) optional($detail)->can_update,
+                    'can_delete' => (bool) optional($detail)->can_delete,
+                ];
+            });
+
             return [
-                'menu_id' => $detail->menu_id,
-                'menu_name' => $detail->menu->name ?? '',
-                'can_create' => (bool) $detail->can_create,
-                'can_view' => (bool) $detail->can_view,
-                'can_update' => (bool) $detail->can_update,
-                'can_delete' => (bool) $detail->can_delete,
+                'header_id' => $header->id,
+                'header_name' => $header->name,
+                'submenus' => $submenus->values(), // reset keys
             ];
-        });
+        })->values();
+        // dd($structuredDetails);
 
         return response()->json([
             'menus' => [
                 'id' => $role->id,
-                'group_user_id' => $role->group_id,
-                'menu_id' => 1,
+                'name' => $role->name,
                 'details' => $structuredDetails,
             ],
             'disabled' => $mode
         ]);
+
+        // $structuredDetails = $role->details->map(function ($detail) {
+        //     return [
+        //         'menu_id' => $detail->menu_id,
+        //         'menu_name' => $detail->menu->name ?? '',
+        //         'can_create' => (bool) $detail->can_create,
+        //         'can_view' => (bool) $detail->can_view,
+        //         'can_update' => (bool) $detail->can_update,
+        //         'can_delete' => (bool) $detail->can_delete,
+        //     ];
+        // });
+
+        // return response()->json([
+        //     'menus' => [
+        //         'id' => $role->id,
+        //         'group_user_id' => $role->group_id,
+        //         'menu_id' => 1,
+        //         'details' => $structuredDetails,
+        //     ],
+        //     'disabled' => $mode
+        // ]);
     }
 
     /**
@@ -204,4 +251,5 @@ class RoleUserController extends Controller
 
         return response()->json($menus);
     }
+
 }

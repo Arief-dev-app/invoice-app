@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('purchase_no')->unique();
             $table->date('transaction_date');
-            $table->unsignedBigInteger('supllier_id')->nullable();
-            $table->unsignedBigInteger('po_status')->nullable();
-            $table->decimal('total_harga', 15, 2)->default(0);
+            $table->unsignedBigInteger('supplier_id');
+            $table->unsignedBigInteger('po_status')->default(1);
+            $table->decimal('total', 15, 2)->default(0);
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
         });

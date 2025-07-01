@@ -5,12 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 
-class DashboardController extends Controller
+class DashboardController extends BaseController
 {
-    public function index()
+    public function data(){
+        return [
+            'url' => '/customer',
+            'title' => 'Customer',
+            'kode' => 'MENU01-2'
+        ];
+    }
+    public function index(Request $request)
     {
-        $menu_header = Menu::where('header_id', 1)->get();
-        $menu_detail = Menu::whereNotNull('parent_id')->get();
-        return view('admin.dashboard', compact('menu_header','menu_detail'));
+        $search   = $request->query('search');
+ 
+        
+
+
+        $menus = $this->getAccessibleMenus();
+        $default = $this->data();
+        
+        return view('admin.dashboard', array_merge($default, [
+            'search'       => $search, 
+            'menu_header'  => $menus['menu_header'],
+            'menu_detail'  => $menus['menu_detail'],
+        ]));
     }
 }

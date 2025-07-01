@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @include('admin.customer.form')
+    @include('admin.transaksi.purchase-order.form')
 @endsection
 
 @push('scripts')
@@ -12,6 +12,14 @@
     let url = "{{ $url }}";
     let perPage = 10;
     let deleteCallback = null;
+
+    const statusMap = {
+        1: 'Open',
+        2: 'Cancel',
+        3: 'Confirm',
+        4: 'Partial',
+        5: 'Finish'
+    };
 
     const tableBody = document.getElementById('productTableBody');
     const searchInput = document.getElementById('searchInput');
@@ -74,20 +82,51 @@
         }
     }
 
+    function renderDetailItems(details) {
+        const tbody = document.querySelector('#productTable tbody');
+        tbody.innerHTML = '';
+        rowCount = 0;
+
+        details.forEach((item) => {
+            const product = products.find(p => p.id === item.product_id);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="border px-2 py-1 text-center">
+                    <button type="button" onclick="this.closest('tr').remove()" class="text-red-500">🗑</button>
+                </td>
+                <td class="border px-2 py-1">
+                    <select name="items[${rowCount}][product_id]" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+                        <option value="">-- Pilih Produk --</option>
+                        ${products.map(p => `
+                            <option value="${p.id}" data-harga="${p.harga}" ${p.id === item.prd_id ? 'selected' : ''}>${p.nama}</option>
+                        `).join('')}
+                    </select>
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="number" name="items[${rowCount}][stock]" value="${item.prd?.stock ?? 0}" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+                </td>
+                <td class="border px-2 py-1">
+                    <input type="number" name="items[${rowCount}][qty]" value="${item.qty}" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+                </td>
+            `;
+            tbody.appendChild(row);
+            rowCount++;
+        });
+    }
+
     // ===============================
     // 3. MODAL HANDLING
     // ===============================
-    async function openGlobalModal(title = 'Tambah Customer', data = null, mode = 'create') {
+    async function openGlobalModal(title = 'Tambah {{ $title }}', data = null, mode = 'create') {
         const modal = document.getElementById('globalModal');
         const form = document.getElementById('productForm');
         const methodInput = document.getElementById('formMethod');
-        const namaInput = document.getElementById('formNama');
-        const emailInput = document.getElementById('formEmail');
-        const phoneInput = document.getElementById('formPhone');
+        const formTrans = document.getElementById('formTrans');
+        const formTransDate = document.getElementById('formTransDate');
         const alamatInput = document.getElementById('formAlamat');
-        const simpanBtn = form.querySelector('button[type="submit"]');
-
-       
+        const simpanBtn = document.getElementById('btnSimpan');
+        const btnConfirm = document.getElementById('btnConfirm');
+        const formSupplier = document.getElementById('supplier_select');     
 
        
 
@@ -98,59 +137,82 @@
         if (mode === 'edit' && data) {
 
             let postData = {
-                url: "{{ $url }}",     // "/customer"
-                kode: "{{ 'edit' }}"    // "MENU01-2"
+                url: "{{ $url }}", 
+                kode: "{{ 'edit' }}"   
             };
 
 
             const { response, data: aksesData } = await cekAkses(`${postData.url}/cekAkses`, postData);
-            const btnSimpan = document.getElementById('btnSimpan');
-            if (btnSimpan) {
+            if (simpanBtn) {
                 if (mode === 'edit' && aksesData.status !== 'error') {
-                    btnSimpan.classList.add('hidden');
+                    simpanBtn.classList.remove('hidden');
                 } else {
-                    btnSimpan.classList.remove('hidden');
+                    simpanBtn.classList.add('hidden');
+                }
+            }
+            window.currentTransId = data.id;
+
+            if (btnConfirm) {
+                if (data.po_status < 2) {
+                    btnConfirm.classList.remove('hidden');
+                } else {
+                    btnConfirm.classList.add('hidden');
                 }
             }
 
-            form.action = `/customer/${data.id}`;
+            form.action = `${url}/${data.id}`;
             methodInput.value = 'PUT';
-            namaInput.value = data.name ?? '';
-            emailInput.value = data.email ?? '';
-            phoneInput.value = data.phone ?? '';
-            alamatInput.value = data.address ?? '';
-            // simpanBtn.classList.remove('hidden');
-            namaInput.readOnly = false;
-            emailInput.readOnly = false;
-            phoneInput.readOnly = false;
-            alamatInput.readOnly = false;
+            formTrans.value = data.purchase_no ?? '';
+            formTransDate.value = data.transaction_date ?? '';            
+            formSupplier.value = data.supplier_id ?? '';
+            formTrans.readOnly = true;
+            formTransDate.readOnly = false;
+            formSupplier.readonly = false;
 
+            renderDetailItems(data.detail ?? []);
 
-            
         } else if (mode === 'view' && data) {
             form.action = '#';
             methodInput.value = 'GET';
-            namaInput.value = data.name ?? '';
-            emailInput.value = data.email ?? '';
-            phoneInput.value = data.phone ?? '';
-            alamatInput.value = data.address ?? '';
+            formTrans.value = data.purchase_no ?? '';
+            formTransDate.value = data.transaction_date ?? '';
+            formSupplier.value = data.supplier_id ?? ''; 
             simpanBtn.classList.add('hidden');
-            namaInput.readOnly = true;
-            emailInput.readOnly = true;
-            phoneInput.readOnly = true;
-            alamatInput.readOnly = true;
+            formTrans.readOnly = true;
+            formTransDate.readOnly = true;
+            formSupplier.readonly = true;
+
+            window.currentTransId = data.id;
+
+            if (btnConfirm) {
+                if (data.po_status < 2) {
+                    btnConfirm.classList.remove('hidden');
+                } else {
+                    btnConfirm.classList.add('hidden');
+                }
+            }
+            renderDetailItems(data.detail ?? []);
+
         } else {
+            const today = new Date().toISOString().split('T')[0];
+            
             form.action = url;
             methodInput.value = 'POST';
-            namaInput.value = '';
-            emailInput.value = '';
-            phoneInput.value = '';
-            alamatInput.value = '';
+            formTrans.value = '';
+            formSupplier.value = ''; // reset supplier
+            formTransDate.value = today;
+            const detailTbody = document.querySelector('#productDetailTableBody');
+            detailTbody.innerHTML = '';
+            
+            rowCount = 0;
+            
+            
             simpanBtn.classList.remove('hidden');
-            namaInput.readOnly = false;
-            emailInput.readOnly = false;
-            phoneInput.readOnly = false;
-            alamatInput.readOnly = false;
+            btnConfirm.classList.add('hidden');
+            formTrans.readOnly = true;
+            
+            
+        
         }
     }
 
@@ -159,6 +221,56 @@
         modal.classList.remove('flex');
         modal.classList.add('hidden');
     }
+
+    let products = @json($products);
+    let rowCount = 0;
+    function addProductRow() {
+        const tbody = document.querySelector('#productTable tbody');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="border px-2 py-1 text-center">
+                <button type="button" onclick="this.closest('tr').remove()" class="text-red-500">🗑</button>
+            </td>
+            <td class="border px-2 py-1">
+                <select name="items[${rowCount}][product_id]" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+                    <option value="">-- Pilih Produk --</option>
+                    ${products.map(p => `<option value="${p.id}" data-harga="${p.harga}">${p.nama}</option>`).join('')}
+                </select>
+            </td>
+          
+            <td class="border px-2 py-1">
+                <input type="number" name="items[${rowCount}][stock]" value="0" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+            </td>
+
+            <td class="border px-2 py-1">
+                <input type="number" name="items[${rowCount}][qty]" value="1" class="w-full border rounded px-2 py-1" onchange="updateTotal(this)">
+            </td>
+            
+            
+        `;
+        tbody.appendChild(row);
+        rowCount++;
+    }
+
+    function updateTotal(el) {
+        const row = el.closest('tr');
+        const select = row.querySelector('select');
+        const stockInput = row.querySelector('input[name$="[stock]"]');
+        const qtyInput = row.querySelector('input[name$="[qty]"]');
+
+        const productId = parseInt(select.value);
+
+        // Cari produk yang dipilih berdasarkan ID
+        const selectedProduct = products.find(p => p.id === productId);
+
+        if (selectedProduct) {
+            stockInput.value = parseInt(selectedProduct.stock ?? 0);
+            // stockInput.value = selectedProduct.stock ?? 0;
+        } else {
+            stockInput.value = 0;
+        }
+    }
+    
 
     // ===============================
     // 4. FORM SUBMIT
@@ -185,12 +297,31 @@
             e.preventDefault();
             showLoader();
 
+            const formData = new FormData(form);
+
             const data = {
-                name: form.name.value,
-                email: form.email.value,
-                phone: form.phone.value,
-                address: form.address.value,
+                // trans: form.trans.value,
+                trans_date: form.trans_date.value,
+                supplier_id: form.supplier_id.value,
+                items: []
+                
             };
+
+             // Ambil detail items
+            const itemMap = {};
+
+            for (let [key, value] of formData.entries()) {
+                const match = key.match(/^items\[(\d+)]\[(\w+)]$/);
+                if (match) {
+                    const index = match[1];
+                    const field = match[2];
+
+                    if (!itemMap[index]) itemMap[index] = {};
+                    itemMap[index][field] = value;
+                }
+            }
+
+            data.items = Object.values(itemMap);
 
             const method = document.getElementById('formMethod').value;
             const url = form.action;
@@ -219,14 +350,27 @@
                 hideLoader();
             }
         });
+
+        const btnConfirm = document.getElementById('btnConfirm');
+        if (btnConfirm) {
+            btnConfirm.addEventListener('click', () => {
+                if (!window.currentTransId) {
+                    alert("ID transaksi tidak ditemukan");
+                    return;
+                }
+
+                // Tampilkan modal konfirmasi
+                document.getElementById('confirmTransModal').classList.remove('hidden');
+            });
+        }
     });
 
     // ===============================
     // 5. DATA FETCHING
     // ===============================
     function loadProducts(search = '') {
-        const url = `/customer?search=${search}&per_page=${perPage}`;
-        fetch(url, { headers: { 'Accept': 'application/json' } })
+        const url2 = `${url}?search=${search}&per_page=${perPage}`;
+        fetch(url2, { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(data => {
                 renderProducts(data);
@@ -262,12 +406,25 @@
                     <td class="p-2 border">${index + 1}</td>
                     <td class="p-2 border space-x-2">
                         <button onclick="fetchMenuAndOpenModal('Lihat Produk', ${data.id}, 'view')">👁</button>
-                        <button onclick="fetchMenuAndOpenModal('Edit Produk', ${data.id}, 'edit')">✏️</button>
-                        <button onclick="handleDeleteAction(() => deleteMenu(${data.id}))">🗑</button>
+                        <button 
+                            onclick="fetchMenuAndOpenModal('Edit Produk', ${data.id}, 'edit')"
+                            ${data.po_status != 1 ? 'disabled class="opacity-50 cursor-not-allowed"' : ''}>
+                            ✏️
+                        </button>
+
+                        <button 
+                            onclick="handleDeleteAction(() => deleteMenu(${data.id}))"
+                            ${data.po_status != 1 ? 'disabled class="opacity-50 cursor-not-allowed"' : ''}>
+                            🗑
+                        </button>
                     </td>
-                    <td class="p-2 border">${data.name}</td>
-                    <td class="p-2 border">${(data.email)}</td>
-                    <td class="p-2 border">${(data.phone)}</td>
+                    <td class="p-2 border">${data.purchase_no}</td>
+                    <td class="p-2 border">
+                    ${statusMap[data.po_status] ?? 'Unknown'}
+                    </td>
+                    <td class="p-2 border">${(data.transaction_date)}</td>
+                    <td class="p-2 border">${(data.suplier.name)}</td>
+                    <td class="p-2 border">${(data.total)}</td>
                 </tr>
             `;
         });
@@ -284,7 +441,7 @@
             html += `
                 <button
                     class="px-3 py-1 rounded border text-sm ${active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'} ${disabled ? 'cursor-not-allowed bg-gray-100 text-gray-400' : ''}"
-                    ${!disabled ? `onclick="loadProductsByUrl('/customer?page=${page}&per_page=${perPage}')"` : 'disabled'}>
+                    ${!disabled ? `onclick="loadProductsByUrl('${url}?page=${page}&per_page=${perPage}')"` : 'disabled'}>
                     ${label ?? page}
                 </button>
             `;
@@ -347,8 +504,8 @@
         //     openGlobalModal('Tambah Produk');
         // }, 300);
         let postData = {
-            url: "{{ $url }}",     // "/customer"
-            kode: "{{ 'create' }}"    // "MENU01-2"
+            url: "{{ $url }}",    
+            kode: "{{ 'create' }}"   
         };
 
         showLoader();
@@ -365,7 +522,7 @@
             }
 
             if (data.status === 'ok') {
-                openGlobalModal('Tambah Customer');
+                openGlobalModal('{{ $title }}');
             }
 
 
@@ -393,10 +550,10 @@
     
 
     async function fetchMenuAndOpenModal(title, id, mode = 'view') {
-
+        
         let postData = {
-            url: "{{ $url }}",     // "/customer"
-            kode: "{{ 'view' }}"    // "MENU01-2"
+            url: "{{ $url }}",     
+            kode: "{{ 'view' }}"   
         };
 
         try {
@@ -407,13 +564,14 @@
 
             if (!response.ok) {
                 showErrorAlert(data.message || 'Terjadi kesalahan');
-                return; // hentikan eksekusi
+                return;
             }
 
             if (data.status === 'ok') {
                 
-                const res = await fetch(`/customer/${id}`);
+                const res = await fetch(`${url}/${id}`);
                 if (!res.ok) throw new Error('Gagal mengambil data produk');
+                console.log(res);
                 const product = await res.json();
                 hideLoader();
                 openGlobalModal(title, product, mode);
@@ -430,6 +588,55 @@
         deleteCallback = callback;
         document.getElementById('confirmDeleteModal').classList.remove('hidden');
         document.getElementById('confirmDeleteModal').classList.add('flex');
+    }
+
+    function cancelConfirm() {
+        document.getElementById('confirmTransModal').classList.add('hidden');
+        currentTransId = null;
+    }
+
+    async function confirmTransaction() {
+        showLoader();
+        if (!currentTransId) return;
+
+        try {
+            let postData = {
+                url: "{{ $url }}", 
+                kode: "{{ 'delete' }}"
+            };
+
+            const { response, data } = await cekAkses(`${postData.url}/cekAkses`, postData);
+
+            if (!response.ok) {
+                showErrorAlert(data.message || 'Terjadi kesalahan');
+                return;
+            }
+
+            if (data.status === 'ok') {      
+            
+                const response = await fetch(`${url}/${currentTransId}/confirm`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    }
+                });
+    
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showSuccessAlert(result.message || 'Transaksi berhasil diconfirm');
+                    location.reload();
+                } else {
+                    showSuccessAlert(result.message || 'Proses Confirm Gagal');
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Terjadi kesalahan saat konfirmasi.');
+        } finally {
+            hideLoader();
+        }
     }
 
     function cancelDelete() {
@@ -450,8 +657,8 @@
         try {
 
             let postData = {
-                url: "{{ $url }}",     // "/customer"
-                kode: "{{ 'delete' }}"    // "MENU01-2"
+                url: "{{ $url }}", 
+                kode: "{{ 'delete' }}"
             };
 
             const { response, data } = await cekAkses(`${postData.url}/cekAkses`, postData);
@@ -462,7 +669,7 @@
             }
 
             if (data.status === 'ok') {         
-                const res = await fetch(`/customer/${id}`, {
+                const res = await fetch(`${url}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',

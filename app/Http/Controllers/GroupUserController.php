@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GroupUser;
+use App\Models\RoleUser;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,10 @@ class GroupUserController extends Controller
             $user = GroupUser::create([
                 'name' => $request->name,
                 'description' => $request->description,
+            ]);
+            
+            $user = RoleUser::create([
+                'group_id' => $user->id,
             ]);
     
             return redirect()->route('group-user.index')->with('success', 'Menu berhasil dibuat!');

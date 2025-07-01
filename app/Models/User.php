@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'group_id',
+        'is_admin',
     ];
 
     public function group()

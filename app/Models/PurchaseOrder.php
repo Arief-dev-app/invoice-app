@@ -8,7 +8,7 @@ class PurchaseOrder extends Model
 {
     protected $table = 'purchase_order';
 
-    protected $fillable = ['purchase_no', 'transaction_date','supllier_id','po_status', 'total_harga' ,'user_id'];
+    protected $fillable = ['purchase_no', 'transaction_date','supplier_id','po_status', 'total' ,'user_id'];
 
     public function detail()
     {
@@ -16,7 +16,7 @@ class PurchaseOrder extends Model
     }
     public function suplier()
     {
-        return $this->belongsTo(Supplier::class, 'user_id');
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
     public function user()
     {

@@ -12,6 +12,8 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderDetail;
+use App\Models\Purchase;
+use App\Models\PurchaseDetail;
 use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Facades\Hash;
@@ -26,47 +28,22 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        $groups = [
-            [
-                'name' => 'Admin',
-                'description' => 'Admin',
-                'flag_active' => true,
-            ],
-            [
-                'name' => 'Kasir',
-                'description' => 'Kasir',
-                'flag_active' => true,
-            ],
-        ];
+        // $groups = [
+        //     [
+        //         'name' => 'Admin',
+        //         'description' => 'Admin',
+        //         'flag_active' => true,
+        //     ],
+        //     [
+        //         'name' => 'Kasir',
+        //         'description' => 'Kasir',
+        //         'flag_active' => true,
+        //     ],
+        // ];
     
-        foreach ($groups as $group) {
-            GroupUser::create($group);
-        }
-
-        $users = [
-            [
-                'name' => 'Arief',
-                'email' => 'ariieff.dev@gmail.com',
-                'password' => Hash::make('gkQpA9qbRsaX!2N'),
-                'group_id' => 1,
-            ],
-            [
-                'name' => 'Admin',
-                'email' => 'admin@gmail.com',
-                'password' => Hash::make('admin123'),
-                'group_id' => 1,
-            ],
-            [
-                'name' => 'Kasir',
-                'email' => 'kasir@gmail.com',
-                'password' => Hash::make('kasir123'),
-                'group_id' => 2,
-            ],
-        ];
-    
-        foreach ($users as $user) {
-            User::create($user);
-        }
+        // foreach ($groups as $group) {
+        //     GroupUser::create($group);
+        // }
 
         $menus = [
             [
@@ -145,7 +122,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Transaksi Retur Pembelian',
                 'seq' => '23',
                 'code' => 'MENU02-3',
-                'slug' => '/transaksi-retur-pembelian',
+                'slug' => '/retur-pembelian',
                 'header_id' => false,
                 'parent_id' => 7,
             ],
@@ -171,60 +148,69 @@ class DatabaseSeeder extends Seeder
             Menu::create($menu);
         }
 
-        $roles = [
-            [
-                'group_id' => '1'
-            ],
-            [
-                'group_id' => '2'
-            ]
-        ];
-    
-        foreach ($roles as $role) {
-            RoleUser::create($role);
-        }
+        $allMenus = Menu::whereNotNull('parent_id')->get();
+
         
-        $roles_details = [
+        
+        $roles = [
+            ['name' => 'Admin'],
+            ['name' => 'Kasir'],
+        ];
+
+        foreach ($roles as $roleUser) {
+            $role = RoleUser::create($roleUser);
+            
+            foreach ($allMenus as $menu) {
+                RoleUserDetail::create([
+                    'role_user_id' => $role->id,
+                    'menu_id' => $menu->id,
+                    'can_view' => 1,
+                    'can_create' => 1,
+                    'can_update' => 1,
+                    'can_delete' => 1,
+                ]);
+            }
+        } 
+
+
+        $users = [
             [
-                'role_user_id' => 1,
-                'menu_id' => 2,
-                'can_view' => 1,
-                'can_create' => 1,
-                'can_update' => 1,
-                'can_delete' => 1,
+                'name' => 'Arief',
+                'email' => 'ariieff.dev@gmail.com',
+                'password' => Hash::make('gkQpA9qbRsaX!2N'),
+                'is_admin' => 1,
+                'role_id' => 1,
             ],
             [
-                'role_user_id' => 1,
-                'menu_id' => 3,
-                'can_view' => 1,
-                'can_create' => 1,
-                'can_update' => 1,
-                'can_delete' => 1,
+                'name' => 'Admin',
+                'email' => 'admin@gmail.com',
+                'password' => Hash::make('admin123'),
+                'is_admin' => 1,
+                'role_id' => 1,
             ],
             [
-                'role_user_id' => 2,
-                'menu_id' => 3,
-                'can_view' => 1,
-                'can_create' => 1,
-                'can_update' => 1,
-                'can_delete' => 1,
+                'name' => 'Kasir',
+                'email' => 'kasir@gmail.com',
+                'password' => Hash::make('kasir123'),
+                'is_admin' => 0,
+                'role_id' => 2,
             ],
         ];
     
-        foreach ($roles_details as $role_detail) {
-            RoleUserDetail::create($role_detail);
-        }
+        foreach ($users as $user) {
+            User::create($user);
+        }        
 
         // Tambahkan produk "Produk A" sampai "Produk J"
         foreach (range('1', '150') as $angka) {
-            $harga_beli = rand(10000, 20000);
-            $harga_jual = $harga_beli + rand(3000, 40000);
+            $harga_beli = rand(10, 20) * 1000; 
+            $harga_jual = $harga_beli + (rand(3, 40) * 1000);  
 
             Product::create([
                 'nama' => 'Produk ' . $angka,
                 'harga_beli' => $harga_beli,
                 'harga_jual' => $harga_jual,
-                'stock' => 0,
+                'stock' => 100,
                 'user_id' => 1,
             ]);
         }
@@ -315,7 +301,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $now = Carbon::now();
-        $yearMonth = $now->format('Ym'); // e.g., 202506
+        $yearMonth = $now->format('y') . $now->format('m');
         $today = $now->format('Y-m-d');
 
         for ($i = 1; $i <= 10; $i++) {
@@ -324,9 +310,9 @@ class DatabaseSeeder extends Seeder
             $poId = PurchaseOrder::insertGetId([
                 'purchase_no'      => $purchaseNo,
                 'transaction_date' => $today,
-                'supllier_id'      => 1,
+                'supplier_id'      => 1,
                 'po_status'        => rand(1, 3),
-                'total_harga'      => 0,
+                'total'            => 0,
                 'user_id'          => 1,
                 'created_at'       => now(),
                 'updated_at'       => now(),
@@ -334,16 +320,12 @@ class DatabaseSeeder extends Seeder
 
             $total = 0;
             for ($j = 1; $j <= 2; $j++) {
-                $qty = rand(1, 5);
-                $harga = rand(10000, 50000);
-                $totalItem = $qty * $harga;
-                $total += $totalItem;
+                $qty = rand(10, 50);
+                $total += $qty;
 
                 PurchaseOrderDetail::insert([
                     'po_id'       => $poId,
-                    'prd_id'      => $j, // asumsi produk ID 1 dan 2 sudah tersedia
-                    'harga_pcs'   => $harga,
-                    'harga_total' => $totalItem,
+                    'prd_id'      => $j,
                     'qty'         => $qty,
                     'user_id'     => 1,
                     'created_at'  => now(),
@@ -352,7 +334,45 @@ class DatabaseSeeder extends Seeder
             }
 
             PurchaseOrder::where('id', $poId)->update([
-                'total_harga' => $total
+                'total' => $total
+            ]);
+        }
+        
+        for ($i = 1; $i <= 10; $i++) {
+            $purchaseNo = 'PRC/' . $yearMonth . '/' . str_pad($i, 5, '0', STR_PAD_LEFT);
+            $po = rand(1, 10);
+
+            $poId = Purchase::insertGetId([
+                'trans_no'      => $purchaseNo,
+                'transaction_date' => $today,
+                'po_id'            => $po,
+                'supplier_id'      => 1,
+                'trans_status'     => rand(1, 3),
+                'total'            => 0,
+                'user_id'          => 1,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+
+            $total = 0;
+            for ($j = 1; $j <= 2; $j++) {
+                $qty = rand(10, 50);
+                $harga = rand(10000, 50000);
+                $total += $qty;
+
+                PurchaseDetail::insert([
+                    'trans_id'       => $poId,
+                    'prd_id'      => $j,
+                    'harga'       => $harga,
+                    'qty'         => $qty,
+                    'user_id'     => 1,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            Purchase::where('id', $poId)->update([
+                'total' => $total
             ]);
         }
        

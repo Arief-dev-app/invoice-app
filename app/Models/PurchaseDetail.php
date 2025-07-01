@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PurchaseOrderDetail extends Model
+class PurchaseDetail extends Model
 {
-    protected $table = 'purchase_order_detail';
+    protected $table = 'purchase_detail';
 
-    protected $fillable = ['po_id', 'prd_id', 'qty' ,'user_id'];
+    protected $fillable = ['trans_id', 'prd_id', 'harga','qty' ,'user_id'];
 
     public function header()
     {
-        return $this->belongsTo(PurchaseOrder::class);
+        return $this->belongsTo(Purchase::class);
     }
     public function prd()
     {

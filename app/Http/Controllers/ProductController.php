@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; 
 use Illuminate\Pagination\Paginator;
 
-class ProductController extends Controller
+class ProductController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -17,6 +17,14 @@ class ProductController extends Controller
     public function boot()
     {
         Paginator::useTailwind();
+    }
+
+    public function data(){
+        return [
+            'url' => '/customer',
+            'title' => 'Customer',
+            'kode' => 'MENU01-2'
+        ];
     }
 
     public function index(Request $request)
@@ -37,12 +45,16 @@ class ProductController extends Controller
             return response()->json($products);
         }
     
-        $menu_header = Menu::where('header_id', 1)->get();
-        $menu_detail = Menu::whereNotNull('parent_id')->get();
+        
+        $menus = $this->getAccessibleMenus();
+        $default = $this->data();
     
-        return view('admin.product.index', compact(
-            'products', 'search', 'menu_header', 'menu_detail'
-        ));
+        return view('admin.product.index',  array_merge($default, [
+            'products', 
+            'search', 
+            'menu_header'  => $menus['menu_header'],
+            'menu_detail'  => $menus['menu_detail'],
+        ]));
     }
 
     /**

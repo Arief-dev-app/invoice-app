@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('purchase_order_detail', function (Blueprint $table) {
+        Schema::create('retur_purchase_detail', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('po_id');
+            $table->unsignedBigInteger('trans_id');
             $table->unsignedBigInteger('prd_id');
             $table->decimal('qty', 15, 2)->default(0);
             $table->unsignedBigInteger('user_id');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('purchase_order_detail');
+        Schema::dropIfExists('transaksi_retur_pembelian_detail');
     }
 };

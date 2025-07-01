@@ -33,40 +33,41 @@
                     <!-- Navigasi Scrollable -->
                     <nav class="flex-1 overflow-y-auto px-4 mt-4">
                         <ul class="space-y-2">
-
-                            {{-- Static Menu: Auth --}}
-                            <li x-data="{ open: {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'true' : 'false' }} }" class="relative">
-                                <button @click="open = !open"
-                                    class="w-full text-left py-2 px-2 flex justify-between items-center rounded hover:bg-gray-200 transition
-                                    {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
-                                    <span>Auth</span>
-                                    <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
-                                <ul x-show="open" x-cloak class="ml-4 mt-1 space-y-1">
-                                    <li>
-                                        <a href="{{ route('group-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('group-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
-                                            User Group
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('menu.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('menu.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
-                                            Menu
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('role-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
-                                            Role User
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
-                                            User
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+                            @if (auth()->user()->is_admin == 1)
+                                {{-- Static Menu: Auth --}}
+                                <li x-data="{ open: {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'true' : 'false' }} }" class="relative">
+                                    <button @click="open = !open"
+                                        class="w-full text-left py-2 px-2 flex justify-between items-center rounded hover:bg-gray-200 transition
+                                        {{ request()->is('group-user*') || request()->is('menu*') || request()->is('role-user*') || request()->is('user*') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                        <span>Auth</span>
+                                        <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    <ul x-show="open" x-cloak class="ml-4 mt-1 space-y-1">
+                                        <!-- <li>
+                                            <a href="{{ route('group-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('group-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                                User Group
+                                            </a>
+                                        </li> -->
+                                        <li>
+                                            <a href="{{ route('menu.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('menu.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                                Menu
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('role-user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('role-user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                                Role User
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('user.index') }}" class="block px-2 py-1 rounded hover:bg-gray-200 transition {{ request()->routeIs('user.index') ? 'text-blue-600 font-bold bg-gray-100' : 'text-gray-700' }}">
+                                                User
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endif
 
                             {{-- Dynamic Menus --}}
                             @foreach ($menu_header as $menu)

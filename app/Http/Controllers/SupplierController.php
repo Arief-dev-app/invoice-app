@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Http\Request;
 
-class SupplierController extends Controller
+class SupplierController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -17,6 +17,14 @@ class SupplierController extends Controller
     public function boot()
     {
         Paginator::useTailwind();
+    }
+
+    public function data(){
+        return [
+            'url' => '/supplier',
+            'title' => 'Supllier',
+            'kode' => 'MENU01-2'
+        ];
     }
 
     public function index(Request $request)
@@ -37,12 +45,15 @@ class SupplierController extends Controller
             return response()->json($data);
         }
     
-        $menu_header = Menu::where('header_id', 1)->get();
-        $menu_detail = Menu::whereNotNull('parent_id')->get();
+        $menus = $this->getAccessibleMenus();
+        $default = $this->data();
 
-        return view('admin.supplier.index', compact(
-            'data', 'search', 'menu_header', 'menu_detail'
-        ));
+        return view('admin.supplier.index', array_merge($default, [
+            'data'     => $data, 
+            'search'       => $search, 
+            'menu_header'  => $menus['menu_header'],
+            'menu_detail'  => $menus['menu_detail'],
+        ]));
     }
 
     /**

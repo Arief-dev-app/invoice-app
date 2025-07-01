@@ -43,6 +43,24 @@ Route::middleware('auth')->group(function () {
      Route::post('customer/cekAkses', [\App\Http\Controllers\CustomerController::class, 'cekAkses']);
      
      Route::resource('supplier', \App\Http\Controllers\SupplierController::class);
+     
+     //  Transaksi
+     Route::resource('purchase-order', \App\Http\Controllers\PurchaseOrderController::class);
+     Route::post('purchase-order/cekAkses', [\App\Http\Controllers\PurchaseOrderController::class, 'cekAkses']);
+     Route::put('/purchase-order/{id}/confirm', [\App\Http\Controllers\PurchaseOrderController::class, 'confirm']);
+     
+     Route::resource('transaksi-pembelian', \App\Http\Controllers\PurchaseController::class);
+     Route::post('transaksi-pembelian/cekAkses', [\App\Http\Controllers\PurchaseController::class, 'cekAkses']);
+     Route::get('/transaksi-pembelian/{id}/SearchPo', [\App\Http\Controllers\PurchaseController::class, 'searchPo']);
+     Route::put('/transaksi-pembelian/{id}/confirm', [\App\Http\Controllers\PurchaseController::class, 'confirm']);
+     
+     Route::resource('retur-pembelian', \App\Http\Controllers\ReturPurchaseController::class);
+     Route::post('retur-pembelian/cekAkses', [\App\Http\Controllers\ReturPurchaseController::class, 'cekAkses']);
+     Route::get('/retur-pembelian/{id}/SearchPo', [\App\Http\Controllers\ReturPurchaseController::class, 'searchPo']);
+     Route::put('/retur-pembelian/{id}/confirm', [\App\Http\Controllers\ReturPurchaseController::class, 'confirm']);
+
+
+    
 
     
 

@@ -5,8 +5,7 @@
     <div class="bg-white shadow rounded p-6">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Daftar Role</h2>
-            <button id="addGroupBtn" onclick="handleAddGroupClick()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                + Tambah Role</button>
+            <!-- <button id="addGroupBtn" onclick="handleAddGroupClick()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Tambah Role</button> -->
             </div>
 
         @if (session('success'))
@@ -56,7 +55,7 @@
                         <button onclick="handleDeleteAction(() => deleteMenu({{ $role->id }}))">🗑</button>
                         
                     </td>
-                    <td class="border px-2 py-1">{{ $role->groupUser->name }}</td>
+                    <td class="border px-2 py-1">{{ $role->name }}</td>
                     
                 </tr>
                 @endforeach
@@ -104,17 +103,13 @@
 
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-2">
-                        <label for="user_group_select" class="block text-sm font-medium">Pilih Group User</label>
+                        <label for="user_group_input" class="block text-sm font-medium">Nama Group User</label>
                     </div>
-                    <select id="user_group_select" name="user_group_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                        <option value="">-- Pilih Group --</option>
-                        @foreach($group as $user_group)
-                            <option value="{{ $user_group->id }}" {{ old('user_group_id') == $user_group->id ? 'selected' : '' }}>{{ $user_group->name }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" id="user_group_input" name="user_group_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Masukkan nama group user" value="{{ old('user_group_id') }}"
+                    >
                 </div>
 
-                <div class="mb-4">
+                <!-- <div class="mb-4">
                     <div class="flex justify-between items-center mb-2">
                         <label for="menu_select" class="block text-sm font-medium">Pilih Menu</label>
                     </div>
@@ -124,7 +119,7 @@
                             <option value="{{ $menu->id }}" {{ old('menu_id') == $menu->id ? 'selected' : '' }}>{{ $menu->name }}</option>
                         @endforeach
                     </select>
-                </div>
+                </div> -->
 
                 <table class="w-full border text-sm" id="productTable">
                     <thead class="bg-gray-100 text-center">
@@ -209,37 +204,94 @@
     }
 
     function fillForm(data) {
-        const disabled = data.disabled === 'view'; // true jika view mode   
+        const disabled = data.disabled === 'view'; // true jika view mode 
+        console.log(data);  
+        const menus = data.details;
+        
 
         // Set group select value
-        document.getElementById('user_group_select').value = data.group_user_id;
-        document.getElementById('menu_select').value = data.group_user_id;
+        document.getElementById('user_group_input').value = data.name;
+        // document.getElementById('menu_select').value = data.group_user_id;
 
         // Jika perlu disable select juga
-        document.getElementById('user_group_select').disabled = disabled;
-        document.getElementById('menu_select').disabled = disabled;
+        document.getElementById('user_group_input').disabled = disabled;
+        // document.getElementById('menu_select').disabled = disabled;
 
         const tbody = document.querySelector('#productTable tbody');
         tbody.innerHTML = '';
 
-        data.details.forEach((item, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="border px-2 py-1">${item.menu_name}</td>
-                <td class="border px-2 py-1 text-center">
-                    <input type="checkbox" name="permissions[${item.menu_id}][can_create]" ${item.can_create ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-                </td>
-                <td class="border px-2 py-1 text-center">
-                    <input type="checkbox" name="permissions[${item.menu_id}][can_view]" ${item.can_view ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-                </td>
-                <td class="border px-2 py-1 text-center">
-                    <input type="checkbox" name="permissions[${item.menu_id}][can_update]" ${item.can_update ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-                </td>
-                <td class="border px-2 py-1 text-center">
-                    <input type="checkbox" name="permissions[${item.menu_id}][can_delete]" ${item.can_delete ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-                </td>
+        data.details.forEach(group => {
+            // Tambah baris header
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = `
+                <td class="border px-2 py-1 font-semibold">${group.header_name}</td>
+                <td class="border px-2 py-1 text-center" colspan="4"></td>
             `;
-            tbody.appendChild(row);
+            tbody.appendChild(headerRow);
+
+            // Tambah baris submenus
+            group.submenus.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border px-2 py-1">${item.menu_name}</td>
+                    <td class="border px-2 py-1 text-center">
+                        <input type="checkbox" name="permissions[${item.menu_id}][can_create]" ${item.can_create ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                    </td>
+                    <td class="border px-2 py-1 text-center">
+                        <input type="checkbox" name="permissions[${item.menu_id}][can_view]" ${item.can_view ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                    </td>
+                    <td class="border px-2 py-1 text-center">
+                        <input type="checkbox" name="permissions[${item.menu_id}][can_update]" ${item.can_update ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                    </td>
+                    <td class="border px-2 py-1 text-center">
+                        <input type="checkbox" name="permissions[${item.menu_id}][can_delete]" ${item.can_delete ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                setTimeout(() => {
+                    const rowCheckboxes = row.querySelectorAll('input[type="checkbox"]');
+
+                    rowCheckboxes.forEach(cb => {
+                        cb.addEventListener('change', () => {
+                            const checkboxName = cb.name;
+                            const menuId = checkboxName.match(/permissions\[(\d+)\]/)[1];
+                            const prefix = `permissions[${menuId}]`;
+
+                            const canView = document.querySelector(`input[name="${prefix}[can_view]"]`);
+                            const canCreate = document.querySelector(`input[name="${prefix}[can_create]"]`);
+                            const canUpdate = document.querySelector(`input[name="${prefix}[can_update]"]`);
+                            const canDelete = document.querySelector(`input[name="${prefix}[can_delete]"]`);
+
+                            if (cb.checked) {
+                                // === Centang (kanan → kiri) ===
+                                if (cb === canDelete) {
+                                    canUpdate.checked = true;
+                                    canCreate.checked = true;
+                                    canView.checked = true;
+                                } else if (cb === canUpdate) {
+                                    canCreate.checked = true;
+                                    canView.checked = true;
+                                } else if (cb === canCreate) {
+                                    canView.checked = true;
+                                }
+                            } else {
+                                 // === Uncentang: kanan → kiri juga
+                                if (cb === canDelete) {
+                                    canUpdate.checked = false;
+                                    canCreate.checked = false;
+                                    canView.checked = false;
+                                } else if (cb === canUpdate) {
+                                    canCreate.checked = false;
+                                    canView.checked = false;
+                                } else if (cb === canCreate) {
+                                    canView.checked = false;
+                                }
+                            }
+                        });
+                    });
+                }, 0);
+    
+            });
         });
         
 
@@ -455,29 +507,29 @@
     let rowCount = 0;
 
 
-    document.getElementById('menu_select').addEventListener('change', async function () {
-        const groupId = this.value;
+    // document.getElementById('menu_select').addEventListener('change', async function () {
+    //     const groupId = this.value;
 
-        if (!groupId) {
-            document.querySelector("#productTable tbody").innerHTML = '';
-            return;
-        }
+    //     if (!groupId) {
+    //         document.querySelector("#productTable tbody").innerHTML = '';
+    //         return;
+    //     }
 
-        showFullscreenLoader();
+    //     showFullscreenLoader();
 
-        try {
-            const response = await fetch(`/role-user/${groupId}/menus`);
-            if (!response.ok) throw new Error('Gagal ambil data menu');
+    //     try {
+    //         const response = await fetch(`/role-user/${groupId}/menus`);
+    //         if (!response.ok) throw new Error('Gagal ambil data menu');
 
-            const menus = await response.json();
-            populateMenuTableFromGroup(menus); // Panggil fungsi buat render
-        } catch (error) {
-            alert('Terjadi kesalahan saat memuat menu');
-            console.error(error);
-        } finally {
-            hideFullscreenLoader();
-        }
-    });
+    //         const menus = await response.json();
+    //         populateMenuTableFromGroup(menus); // Panggil fungsi buat render
+    //     } catch (error) {
+    //         alert('Terjadi kesalahan saat memuat menu');
+    //         console.error(error);
+    //     } finally {
+    //         hideFullscreenLoader();
+    //     }
+    // });
 
     function populateMenuTableFromGroup(menus) {
         const tbody = document.querySelector("#productTable tbody");
