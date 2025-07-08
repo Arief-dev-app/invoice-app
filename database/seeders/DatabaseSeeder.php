@@ -14,6 +14,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderDetail;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
+use App\Models\Penjualan;
+use App\Models\PenjualanDetail;
 use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Facades\Hash;
@@ -70,30 +72,30 @@ class DatabaseSeeder extends Seeder
                 'header_id' => false,
                 'parent_id' => 1,
             ],
-            [
-                'name' => 'Supplier',
-                'seq' => '13',
-                'code' => 'MENU01-3',
-                'slug' => '/supplier',
-                'header_id' => false,
-                'parent_id' => 1,
-            ],
-            [
-                'name' => 'Jasa',
-                'seq' => '14',
-                'code' => 'MENU01-4',
-                'slug' => '/jasa',
-                'header_id' => false,
-                'parent_id' => 1,
-            ],
-            [
-                'name' => 'Kategori',
-                'seq' => '15',
-                'code' => 'MENU01-5',
-                'slug' => '/kategori',
-                'header_id' => false,
-                'parent_id' => 1,
-            ],
+            // [
+            //     'name' => 'Supplier',
+            //     'seq' => '13',
+            //     'code' => 'MENU01-3',
+            //     'slug' => '/supplier',
+            //     'header_id' => false,
+            //     'parent_id' => 1,
+            // ],
+            // [
+            //     'name' => 'Jasa',
+            //     'seq' => '14',
+            //     'code' => 'MENU01-4',
+            //     'slug' => '/jasa',
+            //     'header_id' => false,
+            //     'parent_id' => 1,
+            // ],
+            // [
+            //     'name' => 'Kategori',
+            //     'seq' => '15',
+            //     'code' => 'MENU01-5',
+            //     'slug' => '/kategori',
+            //     'header_id' => false,
+            //     'parent_id' => 1,
+            // ],
             [
                 'name' => 'Transaksi',
                 'seq' => '2',
@@ -102,45 +104,61 @@ class DatabaseSeeder extends Seeder
                 'header_id' => true,
                 'parent_id' => null,
             ],
-            [
-                'name' => 'Purchase-Order',
-                'seq' => '21',
-                'code' => 'MENU02-1',
-                'slug' => '/purchase-order',
-                'header_id' => false,
-                'parent_id' => 7,
-            ],
-            [
-                'name' => 'Transaksi Pembelian',
-                'seq' => '22',
-                'code' => 'MENU02-2',
-                'slug' => '/transaksi-pembelian',
-                'header_id' => false,
-                'parent_id' => 7,
-            ],
-            [
-                'name' => 'Transaksi Retur Pembelian',
-                'seq' => '23',
-                'code' => 'MENU02-3',
-                'slug' => '/retur-pembelian',
-                'header_id' => false,
-                'parent_id' => 7,
-            ],
+            // [
+            //     'name' => 'Purchase-Order',
+            //     'seq' => '21',
+            //     'code' => 'MENU02-1',
+            //     'slug' => '/purchase-order',
+            //     'header_id' => false,
+            //     'parent_id' => 7,
+            // ],
+            // [
+            //     'name' => 'Transaksi Pembelian',
+            //     'seq' => '22',
+            //     'code' => 'MENU02-2',
+            //     'slug' => '/transaksi-pembelian',
+            //     'header_id' => false,
+            //     'parent_id' => 7,
+            // ],
+            // [
+            //     'name' => 'Transaksi Retur Pembelian',
+            //     'seq' => '23',
+            //     'code' => 'MENU02-3',
+            //     'slug' => '/retur-pembelian',
+            //     'header_id' => false,
+            //     'parent_id' => 7,
+            // ],
             [
                 'name' => 'Transaksi Penjualan',
-                'seq' => '24',
+                'seq' => '21',
                 'code' => 'MENU02-4',
                 'slug' => '/transaksi-penjualan',
                 'header_id' => false,
-                'parent_id' => 7,
+                'parent_id' => 4,
+            ],
+            // [
+            //     'name' => 'Transaksi Retur Penjualan',
+            //     'seq' => '25',
+            //     'code' => 'MENU02-5',
+            //     'slug' => '/transaksi-retur-penjualan',
+            //     'header_id' => false,
+            //     'parent_id' => 7,
+            // ],
+            [
+                'name' => 'Laporan',
+                'seq' => '3',
+                'code' => 'MENU03',
+                'slug' => '#',
+                'header_id' => true,
+                'parent_id' => null,
             ],
             [
-                'name' => 'Transaksi Retur Penjualan',
-                'seq' => '25',
-                'code' => 'MENU02-5',
-                'slug' => '/transaksi-retur-penjualan',
+                'name' => 'Laporan penjualan',
+                'seq' => '31',
+                'code' => 'MENU03-1',
+                'slug' => '/laporan-penjualan',
                 'header_id' => false,
-                'parent_id' => 7,
+                'parent_id' => 6,
             ],
         ];
     
@@ -372,6 +390,43 @@ class DatabaseSeeder extends Seeder
             }
 
             Purchase::where('id', $poId)->update([
+                'total' => $total
+            ]);
+        }
+        
+        for ($i = 1; $i <= 10; $i++) {
+            $purchaseNo = 'TRS/' . $yearMonth . '/' . str_pad($i, 5, '0', STR_PAD_LEFT);
+            $po = rand(1, 10);
+
+            $poId = Penjualan::insertGetId([
+                'trans_no'      => $purchaseNo,
+                'transaction_date' => $today,
+                'customer_id'      => 1,
+                'trans_status'     => rand(1, 3),
+                'total'            => 0,
+                'user_id'          => 1,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+
+            $total = 0;
+            for ($j = 1; $j <= 2; $j++) {
+                $qty = rand(10, 50);
+                $harga = rand(10000, 50000);
+                $total += $harga;
+
+                PenjualanDetail::insert([
+                    'trans_id'    => $poId,
+                    'prd_id'      => $j,
+                    'harga'  => $harga,
+                    'qty'         => $qty,
+                    'user_id'     => 1,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            Penjualan::where('id', $poId)->update([
                 'total' => $total
             ]);
         }

@@ -58,6 +58,18 @@ Route::middleware('auth')->group(function () {
      Route::post('retur-pembelian/cekAkses', [\App\Http\Controllers\ReturPurchaseController::class, 'cekAkses']);
      Route::get('/retur-pembelian/{id}/SearchPo', [\App\Http\Controllers\ReturPurchaseController::class, 'searchPo']);
      Route::put('/retur-pembelian/{id}/confirm', [\App\Http\Controllers\ReturPurchaseController::class, 'confirm']);
+     
+     Route::resource('transaksi-penjualan', \App\Http\Controllers\PenjualanController::class);
+     Route::get('/transaksi-penjualan/{id}/SearchPo', [\App\Http\Controllers\PenjualanController::class, 'searchPo']);
+     Route::post('transaksi-penjualan/cekAkses', [\App\Http\Controllers\PenjualanController::class, 'cekAkses']);
+     Route::put('/transaksi-penjualan/{id}/confirm', [\App\Http\Controllers\PenjualanController::class, 'confirm']);
+     //  Route::get('/transaksi-penjualan/{id}/print', [\App\Http\Controllers\PenjualanController::class, 'print'])->name('transaksi-penjualan.print');
+     Route::get('/transaksi-penjualan/{id}/pdf', [\App\Http\Controllers\PenjualanController::class, 'printPdf'])->name('transaksi-penjualan.print');
+     
+     Route::get('/laporan-penjualan/print-pdf', [\App\Http\Controllers\LaporanPenjualanController::class, 'printPdf']);
+     Route::get('/laporan-penjualan/print-excel', [\App\Http\Controllers\LaporanPenjualanController::class, 'printExcel']);
+     Route::resource('laporan-penjualan', \App\Http\Controllers\LaporanPenjualanController::class);
+   
 
 
     
